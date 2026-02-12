@@ -27,12 +27,12 @@ export interface FavoriteModel {
 export function formatModelForButton(providerID: string, modelID: string): string {
   const formatted = `${providerID}/${modelID}`;
 
-  // Limit to ~30 characters for button width
+  // Limit to ~30 characters for button width (excluding emoji)
   if (formatted.length > 30) {
-    return formatted.substring(0, 27) + "...";
+    return `🤖 ${formatted.substring(0, 27)}...`;
   }
 
-  return formatted;
+  return `🤖 ${formatted}`;
 }
 
 /**

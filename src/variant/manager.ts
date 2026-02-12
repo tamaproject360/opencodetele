@@ -14,7 +14,7 @@ import type { VariantInfo } from "../model/types.js";
  */
 export async function getAvailableVariants(
   providerID: string,
-  modelID: string
+  modelID: string,
 ): Promise<VariantInfo[]> {
   try {
     const { data, error } = await opencodeClient.config.providers();
@@ -49,9 +49,13 @@ export async function getAvailableVariants(
         }));
 
       variants.push(...apiVariants);
-      logger.debug(`[VariantManager] Found ${variants.length} variants for ${providerID}/${modelID} (including default)`);
+      logger.debug(
+        `[VariantManager] Found ${variants.length} variants for ${providerID}/${modelID} (including default)`,
+      );
     } else {
-      logger.debug(`[VariantManager] No variants found for ${providerID}/${modelID}, using default only`);
+      logger.debug(
+        `[VariantManager] No variants found for ${providerID}/${modelID}, using default only`,
+      );
     }
 
     return variants;
@@ -94,7 +98,7 @@ export function setCurrentVariant(variantId: string): void {
  */
 export function formatVariantForButton(variantId: string): string {
   const capitalized = variantId.charAt(0).toUpperCase() + variantId.slice(1);
-  return `💭 ${capitalized}`;
+  return `💡 ${capitalized}`;
 }
 
 /**
@@ -116,7 +120,7 @@ export function formatVariantForDisplay(variantId: string): string {
 export async function validateVariantForModel(
   providerID: string,
   modelID: string,
-  variantId: string
+  variantId: string,
 ): Promise<boolean> {
   const variants = await getAvailableVariants(providerID, modelID);
   const found = variants.find((v) => v.id === variantId && !v.disabled);
