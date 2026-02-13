@@ -61,7 +61,7 @@ export const ru: I18nDictionary = {
   "status.server_unavailable":
     "🔴 OpenCode Server недоступен\n\nИспользуйте /opencode_start для запуска сервера.",
 
-  "projects.empty": "📭 Проектов нет.",
+  "projects.empty": "📭 Проектов нет.\n\nСначала откройте проект в OpenCode, и он появится здесь.",
   "projects.select": "Выберите проект:",
   "projects.select_with_current": "Выберите проект:\n\nТекущий: 🏗 {project}",
   "projects.fetch_error":
