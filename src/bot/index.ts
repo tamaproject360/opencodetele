@@ -8,6 +8,7 @@ import { BOT_COMMANDS } from "./commands/definitions.js";
 import { startCommand } from "./commands/start.js";
 import { helpCommand } from "./commands/help.js";
 import { statusCommand } from "./commands/status.js";
+import { MODEL_BUTTON_TEXT_PATTERN, VARIANT_BUTTON_TEXT_PATTERN } from "./message-patterns.js";
 import { sessionsCommand, handleSessionSelect } from "./commands/sessions.js";
 import { newCommand } from "./commands/new.js";
 import { projectsCommand, handleProjectSelect } from "./commands/projects.js";
@@ -449,8 +450,8 @@ export function createBot(): Bot<Context> {
   });
 
   // Handle Reply Keyboard button press (model selector)
-  // Pattern: "ProviderName/ModelName" (may contain spaces, dots, parentheses, etc.)
-  bot.hears(/^[A-Za-z0-9\-\. ]+\/[A-Za-z0-9\-\. ()]+\.{0,3}$/, async (ctx) => {
+  // Model button text is produced by formatModelForButton() and always starts with "🤖 ".
+  bot.hears(MODEL_BUTTON_TEXT_PATTERN, async (ctx) => {
     logger.debug(`[Bot] Model button pressed: ${ctx.message?.text}`);
 
     try {
@@ -474,7 +475,8 @@ export function createBot(): Bot<Context> {
   });
 
   // Handle Reply Keyboard button press (variant selector)
-  bot.hears(/^💭 \w+$/, async (ctx) => {
+  // Keep support for both legacy "💭" and current "💡" prefix.
+  bot.hears(VARIANT_BUTTON_TEXT_PATTERN, async (ctx) => {
     logger.debug(`[Bot] Variant button pressed: ${ctx.message?.text}`);
 
     try {
