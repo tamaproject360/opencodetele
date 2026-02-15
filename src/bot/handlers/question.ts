@@ -2,6 +2,7 @@ import { Context, InlineKeyboard } from "grammy";
 import { questionManager } from "../../question/manager.js";
 import { opencodeClient } from "../../opencode/client.js";
 import { getCurrentProject } from "../../settings/manager.js";
+import { getCurrentSession } from "../../session/manager.js";
 import { summaryAggregator } from "../../summary/aggregator.js";
 import { logger } from "../../utils/logger.js";
 import { safeBackgroundTask } from "../../utils/safe-background-task.js";
@@ -253,10 +254,12 @@ async function showPollSummary(bot: Context["api"], chatId: number): Promise<voi
 
 async function sendAllAnswersToAgent(bot: Context["api"], chatId: number): Promise<void> {
   const currentProject = getCurrentProject();
+  const currentSession = getCurrentSession();
   const requestID = questionManager.getRequestID();
   const totalQuestions = questionManager.getTotalQuestions();
+  const directory = currentSession?.directory ?? currentProject?.worktree;
 
-  if (!currentProject) {
+  if (!directory) {
     logger.error("[QuestionHandler] No project for sending answers");
     await bot.sendMessage(chatId, t("question.no_active_project"));
     return;
@@ -302,7 +305,7 @@ async function sendAllAnswersToAgent(bot: Context["api"], chatId: number): Promi
     task: () =>
       opencodeClient.question.reply({
         requestID,
-        directory: currentProject.worktree,
+        directory,
         answers: allAnswers,
       }),
     onSuccess: ({ error }) => {

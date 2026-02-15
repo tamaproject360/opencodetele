@@ -2,6 +2,7 @@ import { Context, InlineKeyboard } from "grammy";
 import { permissionManager } from "../../permission/manager.js";
 import { opencodeClient } from "../../opencode/client.js";
 import { getCurrentProject } from "../../settings/manager.js";
+import { getCurrentSession } from "../../session/manager.js";
 import { summaryAggregator } from "../../summary/aggregator.js";
 import { logger } from "../../utils/logger.js";
 import { safeBackgroundTask } from "../../utils/safe-background-task.js";
@@ -79,9 +80,11 @@ export async function handlePermissionCallback(ctx: Context): Promise<boolean> {
 async function handlePermissionReply(ctx: Context, reply: PermissionReply): Promise<void> {
   const requestID = permissionManager.getRequestID();
   const currentProject = getCurrentProject();
+  const currentSession = getCurrentSession();
   const chatId = ctx.chat?.id;
+  const directory = currentSession?.directory ?? currentProject?.worktree;
 
-  if (!requestID || !currentProject || !chatId) {
+  if (!requestID || !directory || !chatId) {
     await ctx.answerCallbackQuery({
       text: t("permission.no_active_request_callback"),
       show_alert: true,
@@ -112,7 +115,7 @@ async function handlePermissionReply(ctx: Context, reply: PermissionReply): Prom
     task: () =>
       opencodeClient.permission.reply({
         requestID,
-        directory: currentProject.worktree,
+        directory,
         reply,
       }),
     onSuccess: ({ error }) => {

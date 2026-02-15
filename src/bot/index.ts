@@ -32,12 +32,13 @@ import {
   handleCompactCancel,
 } from "./handlers/context.js";
 import { questionManager } from "../question/manager.js";
+import { permissionManager } from "../permission/manager.js";
 import { keyboardManager } from "../keyboard/manager.js";
-import { subscribeToEvents } from "../opencode/events.js";
+import { stopEventListening, subscribeToEvents } from "../opencode/events.js";
 import { summaryAggregator } from "../summary/aggregator.js";
 import { formatSummary, formatToolInfo } from "../summary/formatter.js";
 import { opencodeClient } from "../opencode/client.js";
-import { getCurrentSession, setCurrentSession } from "../session/manager.js";
+import { clearSession, getCurrentSession, setCurrentSession } from "../session/manager.js";
 import { ingestSessionInfoForCache } from "../session/cache-manager.js";
 import { getCurrentProject } from "../settings/manager.js";
 import { getStoredAgent } from "../agent/manager.js";
@@ -46,6 +47,7 @@ import { formatVariantForButton } from "../variant/manager.js";
 import { createMainKeyboard } from "./utils/keyboard.js";
 import { logger } from "../utils/logger.js";
 import { safeBackgroundTask } from "../utils/safe-background-task.js";
+import { formatErrorDetails } from "../utils/error-format.js";
 import { pinnedMessageManager } from "../pinned/manager.js";
 import { t } from "../i18n/index.js";
 
@@ -82,10 +84,9 @@ async function ensureCommandsInitialized(ctx: Context, next: NextFunction): Prom
   await next();
 }
 
-async function ensureEventSubscription(): Promise<void> {
-  const currentProject = getCurrentProject();
-  if (!currentProject) {
-    logger.error("No current project found for event subscription");
+async function ensureEventSubscription(directory: string): Promise<void> {
+  if (!directory) {
+    logger.error("No directory found for event subscription");
     return;
   }
 
@@ -303,8 +304,8 @@ async function ensureEventSubscription(): Promise<void> {
     }
   });
 
-  logger.info(`[Bot] Subscribing to OpenCode events for project: ${currentProject.worktree}`);
-  subscribeToEvents(currentProject.worktree, (event) => {
+  logger.info(`[Bot] Subscribing to OpenCode events for project: ${directory}`);
+  subscribeToEvents(directory, (event) => {
     if (event.type === "session.created" || event.type === "session.updated") {
       const info = (
         event.properties as { info?: { directory?: string; time?: { updated?: number } } }
@@ -343,6 +344,25 @@ async function isSessionBusy(sessionId: string, directory: string): Promise<bool
   } catch (err) {
     logger.warn("[Bot] Error checking session status before prompt:", err);
     return false;
+  }
+}
+
+async function resetMismatchedSessionContext(): Promise<void> {
+  stopEventListening();
+  summaryAggregator.clear();
+  questionManager.clear();
+  permissionManager.clear();
+  clearSession();
+  keyboardManager.clearContext();
+
+  if (!pinnedMessageManager.isInitialized()) {
+    return;
+  }
+
+  try {
+    await pinnedMessageManager.clear();
+  } catch (err) {
+    logger.error("[Bot] Failed to clear pinned message during session reset:", err);
   }
 }
 
@@ -543,8 +563,6 @@ export function createBot(): Bot<Context> {
       return;
     }
 
-    await ensureEventSubscription();
-
     botInstance = bot;
     chatIdInstance = ctx.chat.id;
 
@@ -557,6 +575,15 @@ export function createBot(): Bot<Context> {
     keyboardManager.initialize(bot.api, ctx.chat.id);
 
     let currentSession = getCurrentSession();
+
+    if (currentSession && currentSession.directory !== currentProject.worktree) {
+      logger.warn(
+        `[Bot] Session/project mismatch detected. sessionDirectory=${currentSession.directory}, projectDirectory=${currentProject.worktree}. Resetting session context.`,
+      );
+      await resetMismatchedSessionContext();
+      await ctx.reply(t("bot.session_reset_project_mismatch"));
+      return;
+    }
 
     if (!currentSession) {
       await ctx.reply(t("bot.creating_session"));
@@ -619,6 +646,8 @@ export function createBot(): Bot<Context> {
       }
     }
 
+    await ensureEventSubscription(currentSession.directory);
+
     summaryAggregator.setSession(currentSession.id);
     summaryAggregator.setBotAndChatId(bot, ctx.chat.id);
 
@@ -642,7 +671,7 @@ export function createBot(): Bot<Context> {
         variant?: string;
       } = {
         sessionID: currentSession.id,
-        directory: currentProject.worktree,
+        directory: currentSession.directory,
         parts: [{ type: "text", text }],
         agent: currentAgent,
       };
@@ -671,13 +700,14 @@ export function createBot(): Bot<Context> {
         task: () => opencodeClient.session.prompt(promptOptions),
         onSuccess: ({ error }) => {
           if (error) {
-            logger.error("OpenCode API error:", JSON.stringify(error, null, 2));
+            const details = formatErrorDetails(error);
+            logger.error("OpenCode API error:", error);
             // Send the error via API directly because ctx is no longer available
             void bot.api
               .sendMessage(
                 ctx.chat.id,
                 t("bot.prompt_send_error_detailed", {
-                  details: JSON.stringify(error),
+                  details,
                 }),
               )
               .catch(() => {});
@@ -686,7 +716,8 @@ export function createBot(): Bot<Context> {
 
           logger.info("[Bot] session.prompt completed");
         },
-        onError: () => {
+        onError: (error) => {
+          logger.error("[Bot] session.prompt background task failed:", error);
           void bot.api.sendMessage(ctx.chat.id, t("bot.prompt_send_error")).catch(() => {});
         },
       });
