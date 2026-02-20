@@ -18,7 +18,17 @@ import { t } from "../../i18n/index.js";
 export async function handleModelSelect(ctx: Context): Promise<boolean> {
   const callbackQuery = ctx.callbackQuery;
 
-  if (!callbackQuery?.data || !callbackQuery.data.startsWith("model:")) {
+  if (!callbackQuery?.data) {
+    return false;
+  }
+
+  // Provider header buttons are non-clickable separators — silently acknowledge
+  if (callbackQuery.data.startsWith("noop:")) {
+    await ctx.answerCallbackQuery().catch(() => {});
+    return true;
+  }
+
+  if (!callbackQuery.data.startsWith("model:")) {
     return false;
   }
 
@@ -93,32 +103,46 @@ export async function handleModelSelect(ctx: Context): Promise<boolean> {
 }
 
 /**
- * Build inline keyboard with favorite models
+ * Build inline keyboard with all available models, grouped by provider.
  * @param currentModel Current model for highlighting
  * @returns InlineKeyboard with model selection buttons
  */
 export async function buildModelSelectionMenu(currentModel?: ModelInfo): Promise<InlineKeyboard> {
   const keyboard = new InlineKeyboard();
-  const favorites = await getFavoriteModels();
+  const models = await getFavoriteModels();
 
-  if (favorites.length === 0) {
-    logger.warn("[ModelHandler] No favorite models found");
+  if (models.length === 0) {
+    logger.warn("[ModelHandler] No models found");
     return keyboard;
   }
 
-  // Add button for each favorite model
-  favorites.forEach((model) => {
-    const isActive =
-      currentModel &&
-      model.providerID === currentModel.providerID &&
-      model.modelID === currentModel.modelID;
+  // Group models by providerID
+  const grouped = new Map<string, typeof models>();
+  for (const model of models) {
+    const group = grouped.get(model.providerID) ?? [];
+    group.push(model);
+    grouped.set(model.providerID, group);
+  }
 
-    // Inline buttons use full model ID without truncation
-    const label = `${model.providerID}/${model.modelID}`;
-    const labelWithCheck = isActive ? `✅ ${label}` : label;
+  // Render buttons grouped by provider
+  for (const [providerID, providerModels] of grouped) {
+    // Provider header row (non-clickable separator label)
+    keyboard.text(`— ${providerID} —`, `noop:${providerID}`).row();
 
-    keyboard.text(labelWithCheck, `model:${model.providerID}:${model.modelID}`).row();
-  });
+    for (const model of providerModels) {
+      const isActive =
+        currentModel &&
+        model.providerID === currentModel.providerID &&
+        model.modelID === currentModel.modelID;
+
+      // Show only modelID in the button (provider is already shown in the header)
+      const label =
+        model.modelID.length > 40 ? model.modelID.substring(0, 37) + "..." : model.modelID;
+      const labelWithCheck = isActive ? `✅ ${label}` : label;
+
+      keyboard.text(labelWithCheck, `model:${model.providerID}:${model.modelID}`).row();
+    }
+  }
 
   return keyboard;
 }

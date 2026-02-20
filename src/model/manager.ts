@@ -1,6 +1,7 @@
 import { getCurrentModel, setCurrentModel } from "../settings/manager.js";
 import { config } from "../config.js";
 import { logger } from "../utils/logger.js";
+import { opencodeClient } from "../opencode/client.js";
 import type { ModelInfo, FavoriteModel } from "./types.js";
 import path from "node:path";
 
@@ -63,10 +64,40 @@ function getOpenCodeModelStatePath(): string {
 }
 
 /**
- * Get list of favorite models from OpenCode local state file
- * Falls back to env default model if file is unavailable or empty
+ * Get all available models from OpenCode API (all providers).
+ * Falls back to local favorites file, then env default if API is unavailable.
  */
 export async function getFavoriteModels(): Promise<FavoriteModel[]> {
+  // 1. Try to fetch all models from the live API
+  try {
+    const { data: providersData, error } = await opencodeClient.config.providers();
+
+    if (!error && providersData?.providers && providersData.providers.length > 0) {
+      const apiModels: FavoriteModel[] = [];
+
+      for (const provider of providersData.providers) {
+        const models = Object.values(provider.models ?? {});
+        for (const model of models) {
+          if (model.id) {
+            apiModels.push({ providerID: provider.id, modelID: model.id });
+          }
+        }
+      }
+
+      if (apiModels.length > 0) {
+        logger.debug(`[ModelManager] Loaded ${apiModels.length} models from API`);
+        return apiModels;
+      }
+
+      logger.warn("[ModelManager] API returned no models, falling back to local favorites");
+    } else {
+      logger.warn("[ModelManager] API providers error or empty, falling back to local favorites");
+    }
+  } catch (err) {
+    logger.warn("[ModelManager] Failed to fetch models from API, falling back to local:", err);
+  }
+
+  // 2. Fallback: read local OpenCode favorites file
   const envDefaultModel = getEnvDefaultModel();
 
   try {
@@ -92,6 +123,7 @@ export async function getFavoriteModels(): Promise<FavoriteModel[]> {
     logger.debug(`[ModelManager] Loaded ${merged.length} favorite models from ${stateFilePath}`);
     return merged;
   } catch (err) {
+    // 3. Final fallback: env default model only
     if (envDefaultModel) {
       logger.warn(
         "[ModelManager] Failed to load OpenCode favorites, using env default model:",
