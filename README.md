@@ -209,4 +209,4 @@ Please follow commit and release note conventions in [CONTRIBUTING.md](CONTRIBUT
 
 ## License
 
-[MIT](LICENSE) © Ruslan Grinev
+[MIT](LICENSE)

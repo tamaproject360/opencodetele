@@ -29,7 +29,10 @@ function getOptionalPositiveIntEnvVar(key: string, defaultValue: number): number
   return parsedValue;
 }
 
-function getOptionalLocaleEnvVar(key: string, defaultValue: "en" | "ru"): "en" | "ru" {
+function getOptionalLocaleEnvVar(
+  key: string,
+  defaultValue: "en" | "ru" | "id",
+): "en" | "ru" | "id" {
   const value = getEnvVar(key, false);
 
   if (!value) {
@@ -39,6 +42,10 @@ function getOptionalLocaleEnvVar(key: string, defaultValue: "en" | "ru"): "en" |
   const normalized = value.trim().toLowerCase().split("-")[0];
   if (normalized === "ru") {
     return "ru";
+  }
+
+  if (normalized === "id") {
+    return "id";
   }
 
   if (normalized === "en") {

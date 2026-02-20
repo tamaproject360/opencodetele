@@ -74,7 +74,7 @@ opencode-telegram-bot/
 |  |- keyboard/manager.ts      # Bottom keyboard state
 |  |- pinned/manager.ts        # Pinned status message state
 |  |- process/manager.ts       # OpenCode process lifecycle
-|  |- i18n/                    # Localized strings (en, ru)
+|  |- i18n/                    # Localized strings (en, ru, id)
 |  \- utils/
 |     |- logger.ts             # Logging utility
 |     \- safe-background-task.ts
@@ -96,7 +96,7 @@ opencode-telegram-bot/
 4. **Summary Pipeline** - event aggregation and Telegram-friendly formatting
 5. **Process Manager** - local OpenCode server process start/stop/status
 6. **Runtime/CLI Layer** - runtime mode, config bootstrap, CLI commands
-7. **I18n Layer** - localized bot and CLI strings (`en`, `ru`)
+7. **I18n Layer** - localized bot and CLI strings (`en`, `ru`, `id`)
 
 ### Data flow
 
@@ -139,11 +139,6 @@ OpenCode Server
 - Use absolute paths when working with file tools (`read`, `write`, `edit`).
 
 ## Coding rules
-
-### Language
-
-- Code, identifiers, comments, and in-code documentation must be in English.
-- User-facing Telegram messages should be localized through i18n.
 
 ### Code style
 
@@ -255,7 +250,7 @@ OPENCODE_MODEL_ID=big-pickle
 
 # Bot options (optional)
 # SESSIONS_LIST_LIMIT=10
-# BOT_LOCALE=en    # en or ru
+# BOT_LOCALE=en    # en, ru, or id
 
 # File output options (optional)
 # CODE_FILE_MAX_SIZE_KB=100
@@ -275,7 +270,7 @@ OPENCODE_MODEL_ID=big-pickle
 | `OPENCODE_SERVER_PASSWORD` | OpenCode auth password            | No       | empty                   |
 | `LOG_LEVEL`                | Logging level                     | No       | `info`                  |
 | `SESSIONS_LIST_LIMIT`      | Max sessions shown in `/sessions` | No       | `10`                    |
-| `BOT_LOCALE`               | Bot locale (`en` or `ru`)         | No       | `en`                    |
+| `BOT_LOCALE`               | Bot locale (`en`, `ru`, or `id`)  | No       | `en`                    |
 | `CODE_FILE_MAX_SIZE_KB`    | Max code file size to send        | No       | `100`                   |
 
 ## OpenCode SDK quick reference

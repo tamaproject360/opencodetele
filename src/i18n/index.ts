@@ -1,7 +1,8 @@
 import { en, type I18nKey } from "./en.js";
+import { id } from "./id.js";
 import { ru } from "./ru.js";
 
-export const SUPPORTED_LOCALES = ["en", "ru"] as const;
+export const SUPPORTED_LOCALES = ["en", "ru", "id"] as const;
 
 export type Locale = (typeof SUPPORTED_LOCALES)[number];
 
@@ -10,6 +11,7 @@ type TranslationParams = Record<string, string | number | boolean | null | undef
 const dictionaries: Record<Locale, Record<I18nKey, string>> = {
   en,
   ru,
+  id,
 };
 
 let runtimeLocaleOverride: Locale | null = null;
@@ -20,6 +22,10 @@ function normalizeLocale(locale: string): Locale {
 
   if (baseLocale === "ru") {
     return "ru";
+  }
+
+  if (baseLocale === "id") {
+    return "id";
   }
 
   return "en";
