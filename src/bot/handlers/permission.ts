@@ -9,6 +9,7 @@ import { safeBackgroundTask } from "../../utils/safe-background-task.js";
 import { PermissionRequest, PermissionReply } from "../../permission/types.js";
 import type { I18nKey } from "../../i18n/en.js";
 import { t } from "../../i18n/index.js";
+import { CB } from "../callback-keys.js";
 
 // Permission type display names
 const PERMISSION_NAME_KEYS: Record<string, I18nKey> = {
@@ -47,7 +48,7 @@ export async function handlePermissionCallback(ctx: Context): Promise<boolean> {
   const data = ctx.callbackQuery?.data;
   if (!data) return false;
 
-  if (!data.startsWith("permission:")) {
+  if (!data.startsWith(CB.PERMISSION)) {
     return false;
   }
 
@@ -195,9 +196,9 @@ function buildPermissionKeyboard(): InlineKeyboard {
 
   // Single row with all 3 buttons
   keyboard
-    .text(t("permission.button.allow"), "permission:once")
-    .text(t("permission.button.always"), "permission:always")
-    .text(t("permission.button.reject"), "permission:reject");
+    .text(t("permission.button.allow"), `${CB.PERMISSION}once`)
+    .text(t("permission.button.always"), `${CB.PERMISSION}always`)
+    .text(t("permission.button.reject"), `${CB.PERMISSION}reject`);
 
   return keyboard;
 }

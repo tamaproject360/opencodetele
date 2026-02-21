@@ -1,7 +1,4 @@
-import { Bot, Context, InputFile, NextFunction } from "grammy";
-import { promises as fs } from "fs";
-import * as path from "path";
-import { fileURLToPath } from "url";
+import { Bot, Context, NextFunction } from "grammy";
 import { SocksProxyAgent } from "socks-proxy-agent";
 import { HttpsProxyAgent } from "https-proxy-agent";
 import { config } from "../config.js";
@@ -20,12 +17,10 @@ import { opencodeStopCommand } from "./commands/opencode-stop.js";
 import { handleAgentCommand } from "./commands/agent.js";
 import { handleModelCommand } from "./commands/model.js";
 import { renameCommand, handleRenameCancel, handleRenameTextAnswer } from "./commands/rename.js";
-import {
-  handleQuestionCallback,
-  showCurrentQuestion,
-  handleQuestionTextAnswer,
-} from "./handlers/question.js";
-import { handlePermissionCallback, showPermissionRequest } from "./handlers/permission.js";
+import { newprojectCommand } from "./commands/newproject.js";
+import { lsCommand, treeCommand } from "./commands/ls.js";
+import { handleQuestionCallback, handleQuestionTextAnswer } from "./handlers/question.js";
+import { handlePermissionCallback } from "./handlers/permission.js";
 import { handleAgentSelect, showAgentSelectionMenu } from "./handlers/agent.js";
 import { handleModelSelect, showModelSelectionMenu } from "./handlers/model.js";
 import { handleVariantSelect, showVariantSelectionMenu } from "./handlers/variant.js";
@@ -37,9 +32,8 @@ import {
 import { questionManager } from "../question/manager.js";
 import { permissionManager } from "../permission/manager.js";
 import { keyboardManager } from "../keyboard/manager.js";
-import { stopEventListening, subscribeToEvents } from "../opencode/events.js";
+import { stopEventListening } from "../opencode/events.js";
 import { summaryAggregator } from "../summary/aggregator.js";
-import { formatSummary, formatToolInfo } from "../summary/formatter.js";
 import { opencodeClient } from "../opencode/client.js";
 import { clearSession, getCurrentSession, setCurrentSession } from "../session/manager.js";
 import { ingestSessionInfoForCache } from "../session/cache-manager.js";
@@ -53,6 +47,15 @@ import { safeBackgroundTask } from "../utils/safe-background-task.js";
 import { formatErrorDetails } from "../utils/error-format.js";
 import { pinnedMessageManager } from "../pinned/manager.js";
 import { t } from "../i18n/index.js";
+import { wireEvents } from "./event-wiring.js";
+import { startHealthMonitor } from "../health/monitor.js";
+import {
+  handleDocumentUpload,
+  handlePhotoUpload,
+  consumePendingAttachments,
+  buildAttachmentContext,
+  cleanupAttachments,
+} from "./handlers/file-upload.js";
 
 let botInstance: Bot<Context> | null = null;
 let chatIdInstance: number | null = null;
@@ -80,6 +83,9 @@ async function ensureCommandsInitialized(ctx: Context, next: NextFunction): Prom
 
     commandsInitialized = true;
     logger.info(`[Bot] Commands initialized for authorized user (chat_id=${ctx.chat.id})`);
+
+    // Start health monitor now that we have a chatId to send alerts to
+    startHealthMonitor(ctx.api, ctx.chat.id);
   } catch (err) {
     logger.error("[Bot] Failed to set commands:", err);
   }
@@ -88,244 +94,11 @@ async function ensureCommandsInitialized(ctx: Context, next: NextFunction): Prom
 }
 
 async function ensureEventSubscription(directory: string): Promise<void> {
-  if (!directory) {
-    logger.error("No directory found for event subscription");
+  if (!botInstance || !chatIdInstance) {
+    logger.error("[Bot] Cannot wire events: bot or chatId not set");
     return;
   }
-
-  summaryAggregator.setOnComplete(async (sessionId, messageText) => {
-    if (!botInstance || !chatIdInstance) {
-      logger.error("Bot or chat ID not available for sending message");
-      return;
-    }
-
-    const currentSession = getCurrentSession();
-    if (currentSession?.id !== sessionId) {
-      return;
-    }
-
-    try {
-      const parts = formatSummary(messageText);
-
-      logger.debug(
-        `[Bot] Sending completed message to Telegram (chatId=${chatIdInstance}, parts=${parts.length})`,
-      );
-      for (let i = 0; i < parts.length; i++) {
-        const isLastPart = i === parts.length - 1;
-        if (isLastPart && keyboardManager.isInitialized()) {
-          // Attach updated keyboard to the last message part (only if initialized)
-          const keyboard = keyboardManager.getKeyboard();
-          if (keyboard) {
-            await botInstance.api.sendMessage(chatIdInstance, parts[i], {
-              reply_markup: keyboard,
-            });
-          } else {
-            await botInstance.api.sendMessage(chatIdInstance, parts[i]);
-          }
-        } else {
-          await botInstance.api.sendMessage(chatIdInstance, parts[i]);
-        }
-      }
-    } catch (err) {
-      logger.error("Failed to send message to Telegram:", err);
-      // Stop processing events after critical error to prevent infinite loop
-      logger.error("[Bot] CRITICAL: Stopping event processing due to error");
-      summaryAggregator.clear();
-    }
-  });
-
-  summaryAggregator.setOnTool(async (toolInfo) => {
-    if (!botInstance || !chatIdInstance) {
-      logger.error("Bot or chat ID not available for sending tool notification");
-      return;
-    }
-
-    const currentSession = getCurrentSession();
-    const sessionId = summaryAggregator["currentSessionId"];
-    if (!currentSession || currentSession.id !== sessionId) {
-      return;
-    }
-
-    try {
-      const message = formatToolInfo(toolInfo);
-      if (message) {
-        await botInstance.api.sendMessage(chatIdInstance, message);
-      }
-    } catch (err) {
-      logger.error("Failed to send tool notification to Telegram:", err);
-    }
-  });
-
-  summaryAggregator.setOnToolFile(async (fileData) => {
-    if (!botInstance || !chatIdInstance) {
-      logger.error("Bot or chat ID not available for sending file");
-      return;
-    }
-
-    const currentSession = getCurrentSession();
-    if (!currentSession) {
-      return;
-    }
-
-    const __filename = fileURLToPath(import.meta.url);
-    const __dirname = path.dirname(__filename);
-    const tempDir = path.join(__dirname, "..", ".tmp");
-
-    try {
-      logger.debug(
-        `[Bot] Sending code file: ${fileData.filename} (${fileData.buffer.length} bytes)`,
-      );
-
-      await fs.mkdir(tempDir, { recursive: true });
-
-      const tempFilePath = path.join(tempDir, fileData.filename);
-      await fs.writeFile(tempFilePath, fileData.buffer);
-
-      await botInstance.api.sendDocument(chatIdInstance, new InputFile(tempFilePath), {
-        caption: fileData.caption,
-      });
-
-      await fs.unlink(tempFilePath);
-      logger.debug(`[Bot] Temporary file deleted: ${fileData.filename}`);
-    } catch (err) {
-      logger.error("Failed to send file to Telegram:", err);
-    }
-  });
-
-  summaryAggregator.setOnQuestion(async (questions, requestID) => {
-    if (!botInstance || !chatIdInstance) {
-      logger.error("Bot or chat ID not available for showing questions");
-      return;
-    }
-
-    logger.info(`[Bot] Received ${questions.length} questions from agent, requestID=${requestID}`);
-    questionManager.startQuestions(questions, requestID);
-    await showCurrentQuestion(botInstance.api, chatIdInstance);
-  });
-
-  summaryAggregator.setOnQuestionError(async () => {
-    logger.info(`[Bot] Question tool failed, clearing active poll and deleting messages`);
-
-    // Delete all messages from the invalid poll
-    const messageIds = questionManager.getMessageIds();
-    for (const messageId of messageIds) {
-      if (chatIdInstance) {
-        await botInstance?.api.deleteMessage(chatIdInstance, messageId).catch((err) => {
-          logger.error(`[Bot] Failed to delete question message ${messageId}:`, err);
-        });
-      }
-    }
-
-    questionManager.clear();
-  });
-
-  summaryAggregator.setOnPermission(async (request) => {
-    if (!botInstance || !chatIdInstance) {
-      logger.error("Bot or chat ID not available for showing permission request");
-      return;
-    }
-
-    logger.info(
-      `[Bot] Received permission request from agent: type=${request.permission}, requestID=${request.id}`,
-    );
-    await showPermissionRequest(botInstance.api, chatIdInstance, request);
-  });
-
-  summaryAggregator.setOnThinking(async () => {
-    if (!botInstance || !chatIdInstance) {
-      return;
-    }
-
-    logger.debug("[Bot] Agent started thinking");
-
-    await botInstance.api.sendMessage(chatIdInstance, t("bot.thinking")).catch((err) => {
-      logger.error("[Bot] Failed to send thinking message:", err);
-    });
-  });
-
-  summaryAggregator.setOnTokens(async (tokens) => {
-    if (!pinnedMessageManager.isInitialized()) {
-      return;
-    }
-
-    try {
-      logger.debug(`[Bot] Received tokens: input=${tokens.input}, output=${tokens.output}`);
-
-      // Update keyboardManager SYNCHRONOUSLY before any await
-      // This ensures keyboard has correct context when onComplete sends the reply
-      const contextSize = tokens.input + tokens.cacheRead;
-      const contextLimit = pinnedMessageManager.getContextLimit();
-      if (contextLimit > 0) {
-        keyboardManager.updateContext(contextSize, contextLimit);
-      }
-
-      await pinnedMessageManager.onMessageComplete(tokens);
-    } catch (err) {
-      logger.error("[Bot] Error updating pinned message with tokens:", err);
-    }
-  });
-
-  summaryAggregator.setOnSessionCompacted(async (sessionId, directory) => {
-    if (!pinnedMessageManager.isInitialized()) {
-      return;
-    }
-
-    try {
-      logger.info(`[Bot] Session compacted, reloading context: ${sessionId}`);
-      await pinnedMessageManager.onSessionCompacted(sessionId, directory);
-    } catch (err) {
-      logger.error("[Bot] Error reloading context after compaction:", err);
-    }
-  });
-
-  summaryAggregator.setOnSessionDiff(async (_sessionId, diffs) => {
-    if (!pinnedMessageManager.isInitialized()) {
-      return;
-    }
-
-    try {
-      await pinnedMessageManager.onSessionDiff(diffs);
-    } catch (err) {
-      logger.error("[Bot] Error updating session diff:", err);
-    }
-  });
-
-  summaryAggregator.setOnFileChange((change) => {
-    if (!pinnedMessageManager.isInitialized()) {
-      return;
-    }
-    pinnedMessageManager.addFileChange(change);
-  });
-
-  pinnedMessageManager.setOnKeyboardUpdate(async (tokensUsed, tokensLimit) => {
-    try {
-      logger.debug(`[Bot] Updating keyboard with context: ${tokensUsed}/${tokensLimit}`);
-      keyboardManager.updateContext(tokensUsed, tokensLimit);
-      // Don't send automatic keyboard updates - keyboard will update naturally with user messages
-    } catch (err) {
-      logger.error("[Bot] Error updating keyboard context:", err);
-    }
-  });
-
-  logger.info(`[Bot] Subscribing to OpenCode events for project: ${directory}`);
-  subscribeToEvents(directory, (event) => {
-    if (event.type === "session.created" || event.type === "session.updated") {
-      const info = (
-        event.properties as { info?: { directory?: string; time?: { updated?: number } } }
-      ).info;
-
-      if (info?.directory) {
-        safeBackgroundTask({
-          taskName: `session.cache.${event.type}`,
-          task: () => ingestSessionInfoForCache(info),
-        });
-      }
-    }
-
-    summaryAggregator.processEvent(event);
-  }).catch((err) => {
-    logger.error("Failed to subscribe to events:", err);
-  });
+  await wireEvents(botInstance, chatIdInstance, directory);
 }
 
 async function isSessionBusy(sessionId: string, directory: string): Promise<boolean> {
@@ -396,13 +169,24 @@ export function createBot(): Bot<Context> {
 
   // Heartbeat for diagnostics: verify the event loop is not blocked
   let heartbeatCounter = 0;
-  setInterval(() => {
+  const heartbeatInterval = setInterval(() => {
     heartbeatCounter++;
     if (heartbeatCounter % 6 === 0) {
       // Log every 30 seconds (5 sec * 6)
       logger.debug(`[Bot] Heartbeat #${heartbeatCounter} - event loop alive`);
     }
   }, 5000);
+
+  bot.catch((err) => {
+    logger.error("[Bot] Unhandled error in bot:", err);
+    if (err.ctx) {
+      logger.error(
+        "[Bot] Error context - update type:",
+        err.ctx.update ? Object.keys(err.ctx.update) : "unknown",
+      );
+    }
+    clearInterval(heartbeatInterval);
+  });
 
   // Log all API calls for diagnostics
   let lastGetUpdatesTime = Date.now();
@@ -443,6 +227,9 @@ export function createBot(): Bot<Context> {
   bot.command("model", handleModelCommand);
   bot.command("stop", stopCommand);
   bot.command("rename", renameCommand);
+  bot.command("newproject", newprojectCommand);
+  bot.command("ls", lsCommand);
+  bot.command("tree", treeCommand);
 
   bot.on("callback_query:data", async (ctx) => {
     logger.debug(`[Bot] Received callback_query:data: ${ctx.callbackQuery?.data}`);
@@ -544,6 +331,15 @@ export function createBot(): Bot<Context> {
       );
     }
     await next();
+  });
+
+  // File and photo upload handlers
+  bot.on("message:document", async (ctx) => {
+    await handleDocumentUpload(ctx);
+  });
+
+  bot.on("message:photo", async (ctx) => {
+    await handlePhotoUpload(ctx);
   });
 
   // Remove any previously set global commands to prevent unauthorized users from seeing them
@@ -709,6 +505,17 @@ export function createBot(): Bot<Context> {
         agent: currentAgent,
       };
 
+      // Prepend any queued file attachments as context in the prompt text
+      const attachments = consumePendingAttachments();
+      if (attachments.length > 0) {
+        const context = buildAttachmentContext(attachments);
+        promptOptions.parts = [{ type: "text", text: context + text }];
+        // Clean up temp files after prompt is built
+        cleanupAttachments(attachments).catch((e) =>
+          logger.warn("[Bot] Failed to clean up attachment files:", e),
+        );
+      }
+
       // Use stored model (from settings or config)
       if (storedModel.providerID && storedModel.modelID) {
         promptOptions.model = {
@@ -760,16 +567,6 @@ export function createBot(): Bot<Context> {
     }
 
     logger.debug("[Bot] message:text handler completed (prompt sent in background)");
-  });
-
-  bot.catch((err) => {
-    logger.error("[Bot] Unhandled error in bot:", err);
-    if (err.ctx) {
-      logger.error(
-        "[Bot] Error context - update type:",
-        err.ctx.update ? Object.keys(err.ctx.update) : "unknown",
-      );
-    }
   });
 
   return bot;

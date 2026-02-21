@@ -9,6 +9,7 @@ import { getStoredAgent } from "../../agent/manager.js";
 import { pinnedMessageManager } from "../../pinned/manager.js";
 import { keyboardManager } from "../../keyboard/manager.js";
 import { t } from "../../i18n/index.js";
+import { CB } from "../callback-keys.js";
 
 /**
  * Handle model selection callback
@@ -28,7 +29,7 @@ export async function handleModelSelect(ctx: Context): Promise<boolean> {
     return true;
   }
 
-  if (!callbackQuery.data.startsWith("model:")) {
+  if (!callbackQuery.data.startsWith(CB.MODEL)) {
     return false;
   }
 
@@ -140,7 +141,7 @@ export async function buildModelSelectionMenu(currentModel?: ModelInfo): Promise
         model.modelID.length > 40 ? model.modelID.substring(0, 37) + "..." : model.modelID;
       const labelWithCheck = isActive ? `✅ ${label}` : label;
 
-      keyboard.text(labelWithCheck, `model:${model.providerID}:${model.modelID}`).row();
+      keyboard.text(labelWithCheck, `${CB.MODEL}${model.providerID}:${model.modelID}`).row();
     }
   }
 

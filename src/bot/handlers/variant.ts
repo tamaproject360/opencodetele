@@ -13,6 +13,7 @@ import { keyboardManager } from "../../keyboard/manager.js";
 import { pinnedMessageManager } from "../../pinned/manager.js";
 import { createMainKeyboard } from "../utils/keyboard.js";
 import { t } from "../../i18n/index.js";
+import { CB } from "../callback-keys.js";
 
 /**
  * Handle variant selection callback
@@ -22,7 +23,7 @@ import { t } from "../../i18n/index.js";
 export async function handleVariantSelect(ctx: Context): Promise<boolean> {
   const callbackQuery = ctx.callbackQuery;
 
-  if (!callbackQuery?.data || !callbackQuery.data.startsWith("variant:")) {
+  if (!callbackQuery?.data || !callbackQuery.data.startsWith(CB.VARIANT)) {
     return false;
   }
 
@@ -38,7 +39,7 @@ export async function handleVariantSelect(ctx: Context): Promise<boolean> {
     }
 
     // Parse callback data: "variant:variantId"
-    const variantId = callbackQuery.data.replace("variant:", "");
+    const variantId = callbackQuery.data.replace(CB.VARIANT, "");
 
     // Get current model
     const currentModel = getStoredModel();
@@ -124,7 +125,7 @@ export async function buildVariantSelectionMenu(
   if (activeVariants.length === 0) {
     logger.warn("[VariantHandler] No active variants found");
     // If no active variants, show default at least
-    keyboard.text(`✅ ${formatVariantForDisplay("default")}`, "variant:default").row();
+    keyboard.text(`✅ ${formatVariantForDisplay("default")}`, `${CB.VARIANT}default`).row();
     return keyboard;
   }
 
@@ -134,7 +135,7 @@ export async function buildVariantSelectionMenu(
     const label = formatVariantForDisplay(variant.id);
     const labelWithCheck = isActive ? `✅ ${label}` : label;
 
-    keyboard.text(labelWithCheck, `variant:${variant.id}`).row();
+    keyboard.text(labelWithCheck, `${CB.VARIANT}${variant.id}`).row();
   });
 
   return keyboard;

@@ -272,6 +272,8 @@ OPENCODE_MODEL_ID=big-pickle
 | `SESSIONS_LIST_LIMIT`      | Max sessions shown in `/sessions` | No       | `10`                    |
 | `BOT_LOCALE`               | Bot locale (`en`, `ru`, or `id`)  | No       | `en`                    |
 | `CODE_FILE_MAX_SIZE_KB`    | Max code file size to send        | No       | `100`                   |
+| `SHOW_THINKING`            | Show "💭 Thinking..." indicator   | No       | `true`                  |
+| `SHOW_TOOL_EVENTS`         | Show tool call notifications      | No       | `true`                  |
 
 ## OpenCode SDK quick reference
 

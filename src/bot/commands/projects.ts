@@ -13,6 +13,7 @@ import { formatVariantForButton } from "../../variant/manager.js";
 import { createMainKeyboard } from "../utils/keyboard.js";
 import { logger } from "../../utils/logger.js";
 import { t } from "../../i18n/index.js";
+import { CB } from "../callback-keys.js";
 
 const MAX_INLINE_BUTTON_LABEL_LENGTH = 64;
 const MAX_PROJECTS_TO_SHOW = 10;
@@ -50,7 +51,7 @@ export async function projectsCommand(ctx: CommandContext<Context>) {
         ? `${index + 1}. ${project.name}`
         : `${index + 1}. ${project.worktree}`;
       const labelWithCheck = formatProjectButtonLabel(label, Boolean(isActive));
-      keyboard.text(labelWithCheck, `project:${project.id}`).row();
+      keyboard.text(labelWithCheck, `${CB.PROJECT}${project.id}`).row();
     });
 
     if (currentProject) {
@@ -69,11 +70,11 @@ export async function projectsCommand(ctx: CommandContext<Context>) {
 
 export async function handleProjectSelect(ctx: Context): Promise<boolean> {
   const callbackQuery = ctx.callbackQuery;
-  if (!callbackQuery?.data || !callbackQuery.data.startsWith("project:")) {
+  if (!callbackQuery?.data || !callbackQuery.data.startsWith(CB.PROJECT)) {
     return false;
   }
 
-  const projectId = callbackQuery.data.replace("project:", "");
+  const projectId = callbackQuery.data.replace(CB.PROJECT, "");
 
   try {
     const projects = await getProjects();

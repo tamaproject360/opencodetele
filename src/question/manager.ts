@@ -184,6 +184,19 @@ class QuestionManager {
 
     return answers;
   }
+
+  /** Reset all state — only call in test environments. */
+  __resetForTests(): void {
+    this.state = {
+      questions: [],
+      currentIndex: 0,
+      selectedOptions: new Map(),
+      customAnswers: new Map(),
+      messageIds: [],
+      isActive: false,
+      requestID: null,
+    };
+  }
 }
 
 export const questionManager = new QuestionManager();

@@ -198,6 +198,14 @@ class KeyboardManager {
   public isInitialized(): boolean {
     return this.state !== null;
   }
+
+  /** Reset all state — only call in test environments. */
+  public __resetForTests(): void {
+    this.state = null;
+    this.api = null;
+    this.chatId = null;
+    this.lastUpdateTime = 0;
+  }
 }
 
 // Export singleton instance

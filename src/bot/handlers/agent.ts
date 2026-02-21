@@ -8,6 +8,7 @@ import { createMainKeyboard } from "../utils/keyboard.js";
 import { pinnedMessageManager } from "../../pinned/manager.js";
 import { keyboardManager } from "../../keyboard/manager.js";
 import { t } from "../../i18n/index.js";
+import { CB } from "../callback-keys.js";
 
 /**
  * Handle agent selection callback
@@ -17,7 +18,7 @@ import { t } from "../../i18n/index.js";
 export async function handleAgentSelect(ctx: Context): Promise<boolean> {
   const callbackQuery = ctx.callbackQuery;
 
-  if (!callbackQuery?.data || !callbackQuery.data.startsWith("agent:")) {
+  if (!callbackQuery?.data || !callbackQuery.data.startsWith(CB.AGENT)) {
     return false;
   }
 
@@ -32,7 +33,7 @@ export async function handleAgentSelect(ctx: Context): Promise<boolean> {
       await pinnedMessageManager.refreshContextLimit();
     }
 
-    const agentName = callbackQuery.data.replace("agent:", "");
+    const agentName = callbackQuery.data.replace(CB.AGENT, "");
 
     // Select agent and persist
     selectAgent(agentName);
@@ -103,7 +104,7 @@ export async function buildAgentSelectionMenu(currentAgent?: string): Promise<In
       ? `✅ ${emoji} ${agent.name.toUpperCase()}`
       : `${emoji} ${agent.name.charAt(0).toUpperCase() + agent.name.slice(1)}`;
 
-    keyboard.text(label, `agent:${agent.name}`).row();
+    keyboard.text(label, `${CB.AGENT}${agent.name}`).row();
   });
 
   return keyboard;

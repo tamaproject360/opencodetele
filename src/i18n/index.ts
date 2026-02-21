@@ -16,7 +16,7 @@ const dictionaries: Record<Locale, Record<I18nKey, string>> = {
 
 let runtimeLocaleOverride: Locale | null = null;
 
-function normalizeLocale(locale: string): Locale {
+export function normalizeLocale(locale: string): Locale {
   const normalized = locale.trim().toLowerCase();
   const baseLocale = normalized.split("-")[0];
 

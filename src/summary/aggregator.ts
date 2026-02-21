@@ -84,6 +84,10 @@ class SummaryAggregator {
     this.chatId = chatId;
   }
 
+  getCurrentSessionId(): string | null {
+    return this.currentSessionId;
+  }
+
   setOnComplete(callback: MessageCompleteCallback): void {
     this.onCompleteCallback = callback;
   }
@@ -639,6 +643,35 @@ class SummaryAggregator {
         }
       });
     }
+  }
+
+  /** Reset all state — only call in test environments. */
+  __resetForTests(): void {
+    if (this.typingTimer) {
+      clearInterval(this.typingTimer);
+    }
+    this.currentSessionId = null;
+    this.currentMessageParts = new Map();
+    this.pendingParts = new Map();
+    this.messages = new Map();
+    this.messageCount = 0;
+    this.lastUpdated = 0;
+    this.onCompleteCallback = null;
+    this.onToolCallback = null;
+    this.onToolFileCallback = null;
+    this.onQuestionCallback = null;
+    this.onQuestionErrorCallback = null;
+    this.onThinkingCallback = null;
+    this.onTokensCallback = null;
+    this.onSessionCompactedCallback = null;
+    this.onPermissionCallback = null;
+    this.onSessionDiffCallback = null;
+    this.onFileChangeCallback = null;
+    this.processedToolStates = new Set();
+    this.bot = null;
+    this.chatId = null;
+    this.typingTimer = null;
+    this.partHashes = new Map();
   }
 }
 

@@ -92,6 +92,11 @@ class PermissionManager {
       isActive: false,
     };
   }
+
+  /** Reset all state — only call in test environments. */
+  __resetForTests(): void {
+    this.clear();
+  }
 }
 
 export const permissionManager = new PermissionManager();

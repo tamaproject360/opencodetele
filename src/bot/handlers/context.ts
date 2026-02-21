@@ -4,6 +4,7 @@ import { opencodeClient } from "../../opencode/client.js";
 import { getStoredModel } from "../../model/manager.js";
 import { logger } from "../../utils/logger.js";
 import { t } from "../../i18n/index.js";
+import { CB } from "../callback-keys.js";
 
 /**
  * Build inline keyboard with compact confirmation menu
@@ -12,8 +13,8 @@ import { t } from "../../i18n/index.js";
 export function buildCompactConfirmationMenu(): InlineKeyboard {
   const keyboard = new InlineKeyboard();
 
-  keyboard.text(t("context.button.confirm"), "compact:confirm").row();
-  keyboard.text(t("context.button.cancel"), "compact:cancel").row();
+  keyboard.text(t("context.button.confirm"), CB.COMPACT_CONFIRM).row();
+  keyboard.text(t("context.button.cancel"), CB.COMPACT_CANCEL).row();
 
   return keyboard;
 }
@@ -46,7 +47,7 @@ export async function handleContextButtonPress(ctx: Context): Promise<void> {
 export async function handleCompactConfirm(ctx: Context): Promise<boolean> {
   const callbackQuery = ctx.callbackQuery;
 
-  if (!callbackQuery?.data || callbackQuery.data !== "compact:confirm") {
+  if (!callbackQuery?.data || callbackQuery.data !== CB.COMPACT_CONFIRM) {
     return false;
   }
 
@@ -118,7 +119,7 @@ export async function handleCompactConfirm(ctx: Context): Promise<boolean> {
 export async function handleCompactCancel(ctx: Context): Promise<boolean> {
   const callbackQuery = ctx.callbackQuery;
 
-  if (!callbackQuery?.data || callbackQuery.data !== "compact:cancel") {
+  if (!callbackQuery?.data || callbackQuery.data !== CB.COMPACT_CANCEL) {
     return false;
   }
 

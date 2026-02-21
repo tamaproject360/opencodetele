@@ -5,6 +5,7 @@ import { renameManager } from "../../rename/manager.js";
 import { pinnedMessageManager } from "../../pinned/manager.js";
 import { logger } from "../../utils/logger.js";
 import { t } from "../../i18n/index.js";
+import { CB } from "../callback-keys.js";
 
 export async function renameCommand(ctx: CommandContext<Context>): Promise<void> {
   try {
@@ -15,7 +16,7 @@ export async function renameCommand(ctx: CommandContext<Context>): Promise<void>
       return;
     }
 
-    const keyboard = new InlineKeyboard().text(t("rename.button.cancel"), "rename:cancel");
+    const keyboard = new InlineKeyboard().text(t("rename.button.cancel"), CB.RENAME_CANCEL);
 
     const message = await ctx.reply(t("rename.prompt", { title: currentSession.title }), {
       reply_markup: keyboard,
@@ -33,7 +34,7 @@ export async function renameCommand(ctx: CommandContext<Context>): Promise<void>
 
 export async function handleRenameCancel(ctx: Context): Promise<boolean> {
   const data = ctx.callbackQuery?.data;
-  if (!data || data !== "rename:cancel") {
+  if (!data || data !== CB.RENAME_CANCEL) {
     return false;
   }
 

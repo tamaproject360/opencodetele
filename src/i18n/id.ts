@@ -30,6 +30,12 @@ export const id: I18nDictionary = {
     "📖 **Bantuan**\n\n/status - Periksa status server\n/sessions - Daftar sesi\n/new - Buat sesi baru\n/help - Bantuan",
 
   "bot.thinking": "💭 Sedang berpikir...",
+  "bot.event_stream_disconnected":
+    "⚠️ Koneksi ke server OpenCode terputus.\\n\\nGagal menyambung kembali ke event stream. Gunakan /status untuk memeriksa server atau /opencode_start untuk memulai ulang.",
+
+  "health.server_unreachable":
+    "🔴 Server OpenCode tidak merespons.\\n\\nPemeriksaan kesehatan gagal beberapa kali. Gunakan /status untuk diagnosis atau /opencode_start untuk memulai ulang server.",
+  "health.server_recovered": "✅ Server OpenCode kembali online.",
   "bot.project_not_selected":
     "🏗 Proyek belum dipilih.\n\nPilih proyek terlebih dahulu dengan /projects.",
   "bot.creating_session": "🔄 Membuat sesi baru...",
@@ -62,7 +68,17 @@ export const id: I18nDictionary = {
   "status.session_not_selected": "📋 Sesi saat ini: belum dipilih",
   "status.session_hint": "Gunakan /sessions untuk memilih atau /new untuk membuat baru",
   "status.server_unavailable":
-    "🔴 Server OpenCode tidak tersedia\n\nGunakan /opencode_start untuk memulai server.",
+    "🔴 Server OpenCode tidak tersedia\\n\\nGunakan /opencode_start untuk memulai server.",
+
+  "status.mcp.section": "Server MCP ({count}):",
+  "status.mcp.item_connected": "  ✅ {name}",
+  "status.mcp.item_disabled": "  ⏸ {name} (dinonaktifkan)",
+  "status.mcp.item_needs_auth": "  🔑 {name} (perlu autentikasi)",
+  "status.mcp.item_failed": "  ❌ {name}: {error}",
+  "status.mcp.none": "Server MCP: tidak ada",
+  "status.formatters.section": "Formatter ({count}):",
+  "status.formatters.item": "  • {name} ({extensions})",
+  "status.formatters.none": "Formatter: tidak ada",
 
   "projects.empty":
     "📭 Tidak ada proyek ditemukan.\n\nBuka direktori di OpenCode dan buat setidaknya satu sesi, kemudian akan muncul di sini.",
@@ -253,6 +269,10 @@ export const id: I18nDictionary = {
   "rename.cancelled": "❌ Pengubahan nama dibatalkan.",
   "rename.button.cancel": "❌ Batal",
 
+  "file_upload.queued":
+    "📎 File antri: {filename}\\n\\nKirim pesanmu dan saya akan menyertakannya sebagai konteks untuk OpenCode.",
+  "file_upload.download_error": "❌ Gagal mengunduh file. Silakan coba lagi.",
+
   "cmd.description.rename": "Ubah nama sesi saat ini",
 
   "cli.usage":
@@ -276,4 +296,38 @@ export const id: I18nDictionary = {
   "legacy.models.no_provider_models": "  ⚠️ Tidak ada model yang tersedia\n",
   "legacy.models.env_hint": "💡 Untuk menggunakan model di .env:\n",
   "legacy.models.error": "🔴 Terjadi kesalahan saat memuat daftar model.",
+
+  "cmd.description.newproject": "Buka direktori sebagai proyek",
+  "cmd.description.ls": "Daftar file di direktori proyek",
+  "cmd.description.tree": "Tampilkan pohon direktori proyek",
+
+  "newproject.usage":
+    "Penggunaan: /newproject <path>\n\nContoh:\n`/newproject /home/user/my-project`\n\nMembuka direktori sebagai proyek OpenCode dan menjadikannya proyek aktif.",
+  "newproject.checking": "🔄 Membuka proyek di: `{path}`...",
+  "newproject.success":
+    "✅ Proyek dibuka: **{project}**\n\nSesi direset. Gunakan /sessions atau /new untuk proyek ini.",
+  "newproject.error":
+    "🔴 Gagal membuka proyek di: `{path}`\n\nPastikan path ada dan server OpenCode berjalan.",
+
+  "ls.project_not_selected":
+    "🏗 Proyek belum dipilih.\n\nPilih proyek terlebih dahulu dengan /projects.",
+  "ls.empty": "📭 Tidak ada file di: `{path}`",
+  "ls.header": "📂 **`{path}`**\n\n",
+  "ls.item_dir": "📁 {name}/",
+  "ls.item_file": "📄 {name}",
+  "ls.item_ignored": "  _(diabaikan)_",
+  "ls.more": "\n_...dan {count} item lainnya_",
+  "ls.error": "🔴 Gagal mendaftar file.\n\nPastikan path ada.",
+  "ls.not_found": "🔴 Path tidak ditemukan: `{path}`",
+
+  "tree.project_not_selected":
+    "🏗 Proyek belum dipilih.\n\nPilih proyek terlebih dahulu dengan /projects.",
+  "tree.header": "🌲 **Pohon: `{path}`**\n\n",
+  "tree.empty": "📭 Tidak ada file di: `{path}`",
+  "tree.error": "🔴 Gagal mendapatkan pohon direktori.\n\nPastikan path ada.",
+
+  "status.worktrees.section": "Worktrees ({count}):",
+  "status.worktrees.item": "  🌿 {name} — `{branch}` (`{directory}`)",
+  "status.worktrees.none": "Worktrees: tidak ada",
+  "status.vcs.branch": "Branch: `{branch}`",
 };

@@ -711,6 +711,12 @@ class PinnedMessageManager {
    * Clear pinned message (when switching projects)
    */
   async clear(): Promise<void> {
+    // Cancel any pending debounced update before resetting state
+    if (this.updateDebounceTimer) {
+      clearTimeout(this.updateDebounceTimer);
+      this.updateDebounceTimer = null;
+    }
+
     if (!this.api || !this.chatId) {
       // Just reset state if not initialized
       this.state.messageId = null;
@@ -740,6 +746,29 @@ class PinnedMessageManager {
     } catch (err) {
       logger.error("[PinnedManager] Error clearing pinned message:", err);
     }
+  }
+
+  /** Reset all state — only call in test environments. */
+  __resetForTests(): void {
+    if (this.updateDebounceTimer) {
+      clearTimeout(this.updateDebounceTimer);
+    }
+    this.api = null;
+    this.chatId = null;
+    this.contextLimit = null;
+    this.onKeyboardUpdateCallback = undefined;
+    this.updateDebounceTimer = null;
+    this.state = {
+      messageId: null,
+      chatId: null,
+      sessionId: null,
+      sessionTitle: t("pinned.default_session_title"),
+      projectName: "",
+      tokensUsed: 0,
+      tokensLimit: 0,
+      lastUpdated: 0,
+      changedFiles: [],
+    };
   }
 }
 

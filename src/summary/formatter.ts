@@ -3,6 +3,7 @@ import * as path from "path";
 import { config } from "../config.js";
 import { logger } from "../utils/logger.js";
 import { t } from "../i18n/index.js";
+import { sanitizeMarkdown } from "../utils/markdown.js";
 
 const TELEGRAM_MESSAGE_LIMIT = 4096;
 
@@ -35,7 +36,8 @@ export function formatSummary(text: string): string[] {
     return [];
   }
 
-  const parts = splitText(text, TELEGRAM_MESSAGE_LIMIT);
+  const sanitized = sanitizeMarkdown(text);
+  const parts = splitText(sanitized, TELEGRAM_MESSAGE_LIMIT);
   const formattedParts: string[] = [];
 
   for (const part of parts) {

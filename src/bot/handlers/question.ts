@@ -7,6 +7,7 @@ import { summaryAggregator } from "../../summary/aggregator.js";
 import { logger } from "../../utils/logger.js";
 import { safeBackgroundTask } from "../../utils/safe-background-task.js";
 import { t } from "../../i18n/index.js";
+import { CB } from "../callback-keys.js";
 
 const MAX_BUTTON_LENGTH = 60;
 
@@ -14,7 +15,7 @@ export async function handleQuestionCallback(ctx: Context): Promise<boolean> {
   const data = ctx.callbackQuery?.data;
   if (!data) return false;
 
-  if (!data.startsWith("question:")) {
+  if (!data.startsWith(CB.QUESTION)) {
     return false;
   }
 
@@ -349,7 +350,7 @@ function buildQuestionKeyboard(
     const isSelected = selectedOptions.has(index);
     const icon = isSelected ? "✅ " : "";
     const buttonText = formatButtonText(option.label, option.description, icon);
-    const callbackData = `question:select:${questionIndex}:${index}`;
+    const callbackData = `${CB.QUESTION}select:${questionIndex}:${index}`;
 
     logger.debug(`[QuestionHandler] Button ${index}: "${buttonText}" -> "${callbackData}"`);
 
@@ -357,14 +358,14 @@ function buildQuestionKeyboard(
   });
 
   if (question.multiple) {
-    keyboard.text(t("question.button.submit"), `question:submit:${questionIndex}`);
+    keyboard.text(t("question.button.submit"), `${CB.QUESTION}submit:${questionIndex}`);
     logger.debug(`[QuestionHandler] Added submit button`);
   }
 
-  keyboard.text(t("question.button.custom"), `question:custom:${questionIndex}`);
+  keyboard.text(t("question.button.custom"), `${CB.QUESTION}custom:${questionIndex}`);
   logger.debug(`[QuestionHandler] Added custom answer button`);
 
-  keyboard.text(t("question.button.cancel"), `question:cancel:${questionIndex}`);
+  keyboard.text(t("question.button.cancel"), `${CB.QUESTION}cancel:${questionIndex}`);
   logger.debug(`[QuestionHandler] Added cancel button`);
 
   logger.debug(`[QuestionHandler] Final keyboard: ${JSON.stringify(keyboard.inline_keyboard)}`);

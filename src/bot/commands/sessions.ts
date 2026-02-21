@@ -9,6 +9,7 @@ import { logger } from "../../utils/logger.js";
 import { safeBackgroundTask } from "../../utils/safe-background-task.js";
 import { config } from "../../config.js";
 import { getLocale, t } from "../../i18n/index.js";
+import { CB } from "../callback-keys.js";
 
 export async function sessionsCommand(ctx: CommandContext<Context>) {
   try {
@@ -42,12 +43,12 @@ export async function sessionsCommand(ctx: CommandContext<Context>) {
     }
 
     const keyboard = new InlineKeyboard();
-    const localeForDate = getLocale() === "ru" ? "ru-RU" : "en-US";
+    const localeForDate = getLocale() === "ru" ? "ru-RU" : getLocale() === "id" ? "id-ID" : "en-US";
 
     sessions.forEach((session, index) => {
       const date = new Date(session.time.created).toLocaleDateString(localeForDate);
       const label = `${index + 1}. ${session.title} (${date})`;
-      keyboard.text(label, `session:${session.id}`).row();
+      keyboard.text(label, `${CB.SESSION}${session.id}`).row();
     });
 
     await ctx.reply(t("sessions.select"), {
@@ -61,11 +62,11 @@ export async function sessionsCommand(ctx: CommandContext<Context>) {
 
 export async function handleSessionSelect(ctx: Context): Promise<boolean> {
   const callbackQuery = ctx.callbackQuery;
-  if (!callbackQuery?.data || !callbackQuery.data.startsWith("session:")) {
+  if (!callbackQuery?.data || !callbackQuery.data.startsWith(CB.SESSION)) {
     return false;
   }
 
-  const sessionId = callbackQuery.data.replace("session:", "");
+  const sessionId = callbackQuery.data.replace(CB.SESSION, "");
 
   try {
     const currentProject = getCurrentProject();
@@ -163,14 +164,7 @@ export async function handleSessionSelect(ctx: Context): Promise<boolean> {
       safeBackgroundTask({
         taskName: "sessions.sendPreview",
         task: () =>
-          sendSessionPreview(
-            ctx.api,
-            chatId,
-            null,
-            session.title,
-            session.id,
-            currentProject.worktree,
-          ),
+          sendSessionPreview(ctx.api, chatId, session.title, session.id, currentProject.worktree),
       });
     }
 
@@ -289,22 +283,12 @@ function formatSessionPreview(_sessionTitle: string, items: SessionPreviewItem[]
 async function sendSessionPreview(
   api: Context["api"],
   chatId: number,
-  messageId: number | null,
   sessionTitle: string,
   sessionId: string,
   directory: string,
 ): Promise<void> {
   const previewItems = await loadSessionPreview(sessionId, directory);
   const finalText = formatSessionPreview(sessionTitle, previewItems);
-
-  if (messageId) {
-    try {
-      await api.editMessageText(chatId, messageId, finalText);
-      return;
-    } catch (err) {
-      logger.warn("[Sessions] Failed to edit preview message, sending new one:", err);
-    }
-  }
 
   try {
     await api.sendMessage(chatId, finalText);

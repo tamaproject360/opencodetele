@@ -1,5 +1,6 @@
 import dotenv from "dotenv";
 import { getRuntimePaths } from "./runtime/paths.js";
+import { normalizeLocale, SUPPORTED_LOCALES, type Locale } from "./i18n/index.js";
 
 const runtimePaths = getRuntimePaths();
 dotenv.config({ path: runtimePaths.envFilePath });
@@ -29,31 +30,22 @@ function getOptionalPositiveIntEnvVar(key: string, defaultValue: number): number
   return parsedValue;
 }
 
-function getOptionalLocaleEnvVar(
-  key: string,
-  defaultValue: "en" | "ru" | "id",
-): "en" | "ru" | "id" {
+function getOptionalLocaleEnvVar(key: string, defaultValue: Locale): Locale {
   const value = getEnvVar(key, false);
 
   if (!value) {
     return defaultValue;
   }
 
-  const normalized = value.trim().toLowerCase().split("-")[0];
-  if (normalized === "ru") {
-    return "ru";
-  }
-
-  if (normalized === "id") {
-    return "id";
-  }
-
-  if (normalized === "en") {
-    return "en";
-  }
-
-  return defaultValue;
+  const normalized = normalizeLocale(value);
+  // normalizeLocale falls back to "en" for unknown locales;
+  // if the raw value wasn't empty but normalizes to "en" when default isn't "en",
+  // we still respect the normalised result (valid English locale inputs map to "en").
+  return normalized;
 }
+
+// Re-export for callers that need to enumerate supported locales
+export { SUPPORTED_LOCALES };
 
 export const config = {
   telegram: {
@@ -72,10 +64,13 @@ export const config = {
   },
   server: {
     logLevel: getEnvVar("LOG_LEVEL", false) || "info",
+    logFormat: getEnvVar("LOG_FORMAT", false) || "text",
   },
   bot: {
     sessionsListLimit: getOptionalPositiveIntEnvVar("SESSIONS_LIST_LIMIT", 10),
     locale: getOptionalLocaleEnvVar("BOT_LOCALE", "en"),
+    showThinking: getEnvVar("SHOW_THINKING", false).toLowerCase() !== "false",
+    showToolEvents: getEnvVar("SHOW_TOOL_EVENTS", false).toLowerCase() !== "false",
   },
   files: {
     maxFileSizeKb: parseInt(getEnvVar("CODE_FILE_MAX_SIZE_KB", false) || "100", 10),

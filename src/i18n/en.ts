@@ -27,7 +27,13 @@ export const en = {
   "help.text":
     "📖 **Help**\n\n/status - Check server status\n/sessions - Session list\n/new - Create new session\n/help - Help",
 
+  "bot.event_stream_disconnected":
+    "⚠️ Lost connection to OpenCode server.\\n\\nEvent stream reconnection failed. Use /status to check the server or /opencode_start to restart it.",
   "bot.thinking": "💭 Thinking...",
+
+  "health.server_unreachable":
+    "🔴 OpenCode server is not responding.\\n\\nHealth check failed multiple times. Use /status to diagnose or /opencode_start to restart the server.",
+  "health.server_recovered": "✅ OpenCode server is back online.",
   "bot.project_not_selected":
     "🏗 Project is not selected.\n\nFirst select a project with /projects.",
   "bot.creating_session": "🔄 Creating a new session...",
@@ -60,7 +66,17 @@ export const en = {
   "status.session_not_selected": "📋 Current session: not selected",
   "status.session_hint": "Use /sessions to select one or /new to create one",
   "status.server_unavailable":
-    "🔴 OpenCode Server is unavailable\n\nUse /opencode_start to start the server.",
+    "🔴 OpenCode Server is unavailable\\n\\nUse /opencode_start to start the server.",
+
+  "status.mcp.section": "MCP Servers ({count}):",
+  "status.mcp.item_connected": "  ✅ {name}",
+  "status.mcp.item_disabled": "  ⏸ {name} (disabled)",
+  "status.mcp.item_needs_auth": "  🔑 {name} (needs auth)",
+  "status.mcp.item_failed": "  ❌ {name}: {error}",
+  "status.mcp.none": "MCP Servers: none",
+  "status.formatters.section": "Formatters ({count}):",
+  "status.formatters.item": "  • {name} ({extensions})",
+  "status.formatters.none": "Formatters: none",
 
   "projects.empty":
     "📭 No projects found.\n\nOpen a directory in OpenCode and create at least one session, then it will appear here.",
@@ -252,6 +268,10 @@ export const en = {
   "rename.cancelled": "❌ Rename cancelled.",
   "rename.button.cancel": "❌ Cancel",
 
+  "file_upload.queued":
+    "📎 File queued: {filename}\\n\\nSend your message and I'll include it as context for OpenCode.",
+  "file_upload.download_error": "❌ Failed to download file. Please try again.",
+
   "cmd.description.rename": "Rename current session",
 
   "cli.usage":
@@ -274,6 +294,40 @@ export const en = {
   "legacy.models.no_provider_models": "  ⚠️ No available models\n",
   "legacy.models.env_hint": "💡 To use model in .env:\n",
   "legacy.models.error": "🔴 An error occurred while loading models list.",
+
+  "cmd.description.newproject": "Open directory as project",
+  "cmd.description.ls": "List files in project directory",
+  "cmd.description.tree": "Show directory tree of project",
+
+  "newproject.usage":
+    "Usage: /newproject <path>\n\nExample:\n`/newproject /home/user/my-project`\n\nOpens the directory as an OpenCode project and makes it the active project.",
+  "newproject.checking": "🔄 Opening project at: `{path}`...",
+  "newproject.success":
+    "✅ Project opened: **{project}**\n\nSession was reset. Use /sessions or /new for this project.",
+  "newproject.error":
+    "🔴 Failed to open project at: `{path}`\n\nMake sure the path exists and OpenCode server is running.",
+
+  "ls.project_not_selected":
+    "🏗 Project is not selected.\n\nFirst select a project with /projects.",
+  "ls.empty": "📭 No files found at: `{path}`",
+  "ls.header": "📂 **`{path}`**\n\n",
+  "ls.item_dir": "📁 {name}/",
+  "ls.item_file": "📄 {name}",
+  "ls.item_ignored": "  _(ignored)_",
+  "ls.more": "\n_...and {count} more items_",
+  "ls.error": "🔴 Failed to list files.\n\nMake sure the path exists.",
+  "ls.not_found": "🔴 Path not found: `{path}`",
+
+  "tree.project_not_selected":
+    "🏗 Project is not selected.\n\nFirst select a project with /projects.",
+  "tree.header": "🌲 **Tree: `{path}`**\n\n",
+  "tree.empty": "📭 No files found at: `{path}`",
+  "tree.error": "🔴 Failed to get directory tree.\n\nMake sure the path exists.",
+
+  "status.worktrees.section": "Worktrees ({count}):",
+  "status.worktrees.item": "  🌿 {name} — `{branch}` (`{directory}`)",
+  "status.worktrees.none": "Worktrees: none",
+  "status.vcs.branch": "Branch: `{branch}`",
 } as const;
 
 export type I18nKey = keyof typeof en;
