@@ -15,6 +15,7 @@ This document describes the internal architecture of the bot: component responsi
    - [OpenCode Client Layer](#opencode-client-layer)
    - [Summary Pipeline](#summary-pipeline)
    - [Process Manager](#process-manager)
+   - [Health Monitor](#health-monitor)
    - [Session Cache](#session-cache)
    - [I18n Layer](#i18n-layer)
 4. [Data Flows](#data-flows)
@@ -60,8 +61,8 @@ src/
 │   ├── event-wiring.ts         wireEvents(): registers SSE→Telegram callbacks
 │   ├── callback-keys.ts        CB constants for all callback_query prefixes
 │   ├── middleware/auth.ts      User authorization middleware
-│   ├── commands/               Command handlers (/start, /status, /sessions, etc.)
-│   ├── handlers/               Callback handlers (agent, model, variant, question, permission)
+│   ├── commands/               Command handlers (/status, /newproject, /ls, /tree, /language, etc.)
+│   ├── handlers/               Callback + message handlers (agent/model/variant/language/question/permission/file-upload)
 │   └── utils/keyboard.ts       Reply keyboard builder (createMainKeyboard)
 │
 ├── opencode/
@@ -79,6 +80,7 @@ src/
 ├── settings/manager.ts         Persistent state (settings.json) with async write queue
 ├── project/manager.ts          Merges live API projects with cache for /projects list
 ├── process/manager.ts          Manages local `opencode serve` child process lifecycle
+├── health/monitor.ts           Periodic health checks + outage/recovery Telegram alerts
 ├── pinned/manager.ts           Manages the pinned status message in Telegram
 ├── keyboard/manager.ts         Manages the Reply Keyboard (bottom keyboard) state
 ├── question/manager.ts         Question poll state machine
@@ -130,10 +132,11 @@ src/
   2. Update logger (debug level)
   3. `authMiddleware` — drops all updates from non-allowed users
   4. `ensureCommandsInitialized` — one-shot: sets commands scoped to the authorized chat on first message
-- **Command handlers**: registered via `bot.command()` for all 12 commands
+- **Command handlers**: registered via `bot.command()` for all user commands (`/status`, `/new`, `/stop`, `/sessions`, `/projects`, `/newproject`, `/ls`, `/tree`, `/model`, `/agent`, `/language`, `/rename`, `/opencode_start`, `/opencode_stop`, `/help`)
 - **Callback dispatcher**: `bot.on("callback_query:data")` iterates handlers in order; each returns a boolean
 - **Reply keyboard listeners**: `bot.hears()` patterns for agent/model/variant/context buttons
 - **Core text handler**: the main prompt logic (see [Data Flows](#data-flows))
+- **Upload handlers**: `bot.on("message:document")` and `bot.on("message:photo")` queue files for next prompt context
 
 **`src/bot/event-wiring.ts`** — `wireEvents(bot, chatId, directory)` is called before every prompt to ensure SSE callbacks are registered. It:
 
@@ -209,6 +212,15 @@ Callbacks (set via `setOn*` methods):
 - **Stop** (Unix): `SIGINT` → wait up to 5s → `SIGKILL`.
 - **Recovery**: on app restart, reads PID from settings and checks liveness via `process.kill(pid, 0)`.
 
+### Health Monitor
+
+**`src/health/monitor.ts`** periodically checks OpenCode server health and sends Telegram alerts on outage/recovery.
+
+- Default interval: 30s (`HEALTH_CHECK_INTERVAL_MS` override)
+- Default failure threshold: 3 consecutive failures (`HEALTH_CHECK_MAX_FAILURES` override)
+- Sends one outage alert per incident and resets after recovery
+- Started after commands are initialized for the authorized chat
+
 ### Session Cache
 
 **`src/session/cache-manager.ts`** — maintains a local cache of up to 10 project directories inferred from session history. This is needed because `opencodeClient.project.list()` only returns currently-open projects, not historical ones.
@@ -229,7 +241,7 @@ Cache is persisted in `settings.json` under `sessionDirectoryCache`.
 - `ru.ts` and `id.ts` must implement all keys (enforced by `I18nDictionary = Record<I18nKey, string>`).
 - `t(key, params?, locale?)`: looks up key → falls back to `en` → falls back to raw key → interpolates `{placeholder}` patterns.
 - `normalizeLocale(locale)`: strips BCP-47 subtags (`"ru-RU"` → `"ru"`), returns `"en" | "ru" | "id"`.
-- Locale resolution order: `setRuntimeLocale()` override → `BOT_LOCALE` env var → `"en"`.
+- Locale resolution order: `setRuntimeLocale()` override → stored locale in `settings.json` → `BOT_LOCALE` env var → `"en"`.
 
 ---
 
@@ -248,7 +260,7 @@ Middleware stack:
   1. API call logger (debug)
   2. Update logger (debug)
   3. authMiddleware → drops if not allowedUserId
-  4. ensureCommandsInitialized → one-shot setMyCommands
+   4. ensureCommandsInitialized → one-shot setMyCommands + startHealthMonitor()
     │
     ▼ bot.hears() for keyboard button text patterns
   └─ If matches agent/model/variant/context button: handle, stop
@@ -274,13 +286,14 @@ Middleware stack:
   │
   ├─ isSessionBusy() → opencodeClient.session.status() → reply if busy
   │
+  ├─ consumePendingAttachments() + buildAttachmentContext() (if any)
   └─ safeBackgroundTask("session.prompt",
-         opencodeClient.session.prompt({
-           sessionID, directory,
-           parts: [{ type: "text", text: userMessage }],
-           agent, model, variant
-         })
-     )
+          opencodeClient.session.prompt({
+            sessionID, directory,
+            parts: [{ type: "text", text: attachmentContext + userMessage }],
+            agent, model, variant
+          })
+      )
      ── FIRE AND FORGET: handler returns immediately ──
 ```
 
@@ -354,6 +367,7 @@ src/app/start-bot-app.ts
   │    ├─ src/rename/manager.ts
   │    └─ src/i18n/index.ts
   ├─ src/process/manager.ts          → settings + client
+  ├─ src/health/monitor.ts           → client + i18n
   └─ src/session/cache-manager.ts    → settings + client
 ```
 
@@ -385,4 +399,4 @@ The app manages one active session, one active project, and one SSE subscription
 
 ### Persistent state in settings.json
 
-All persistent state (current project, session, model, agent, pinned message ID, server PID) is stored in a single `settings.json` file via a serialized async write queue. This avoids concurrent write corruption while keeping the implementation simple.
+All persistent state (current project, session, model, agent, locale, pinned message ID, server PID, and session directory cache) is stored in a single `settings.json` file via a serialized async write queue. This avoids concurrent write corruption while keeping the implementation simple.

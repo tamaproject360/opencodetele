@@ -1,211 +1,237 @@
 # OpenCode Telegram Bot
 
-[![npm version](https://img.shields.io/npm/v/@grinev/opencode-telegram-bot)](https://www.npmjs.com/package/@grinev/opencode-telegram-bot)
-[![CI](https://github.com/grinev/opencode-telegram-bot/actions/workflows/ci.yml/badge.svg)](https://github.com/grinev/opencode-telegram-bot/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Node.js](https://img.shields.io/badge/node-%3E%3D20-brightgreen)](https://nodejs.org)
 
-Kendalikan agen coding [OpenCode](https://opencode.ai) Anda dari ponsel. Kirim tugas, ganti model, pantau kemajuan — semuanya melalui Telegram.
+[English](README.md) | Bahasa Indonesia
 
-Tidak ada port terbuka, tidak ada API yang terekspos. Bot berjalan di mesin Anda bersama OpenCode dan berkomunikasi secara eksklusif melalui Telegram Bot API.
+Kendalikan workflow coding [OpenCode](https://opencode.ai) lokal Anda lewat Telegram. Anda bisa kirim prompt, ganti sesi/proyek/model, menjawab pertanyaan interaktif, dan memantau progres langsung dari ponsel.
+
+Bot ini dibuat untuk operasi single-user, local-first:
+
+- Tidak butuh inbound public port
+- API OpenCode tetap lokal secara default (`127.0.0.1`)
+- Akses Telegram dibatasi ketat oleh allowed user ID
 
 <p align="center">
   <img src="assets/Screenshot-1.png" width="32%" alt="Mengirim tugas coding dan menerima hasil edit file" />
   <img src="assets/Screenshot-2.png" width="32%" alt="Status sesi langsung dengan penggunaan konteks dan file yang berubah" />
-  <img src="assets/Screenshot-3.png" width="32%" alt="Mengganti model AI dari favorit" />
+  <img src="assets/Screenshot-3.png" width="32%" alt="Mengganti model dari chat" />
 </p>
 
-## Fitur
+## Status Saat Ini
 
-- **Coding jarak jauh** — kirim prompt ke OpenCode dari mana saja, terima hasil lengkap dengan kode yang dikirim sebagai file
-- **Manajemen sesi** — buat sesi baru atau lanjutkan yang sudah ada, seperti di TUI
-- **Status langsung** — pesan yang disematkan dengan proyek saat ini, model, penggunaan konteks, dan daftar file yang berubah, diperbarui secara real time
-- **Ganti model** — pilih model apa pun dari favorit OpenCode Anda langsung di chat
-- **Mode agen** — beralih antara mode Plan dan Build dengan cepat
-- **Tanya jawab interaktif** — jawab pertanyaan agen dan setujui izin melalui tombol inline
-- **Kontrol konteks** — kompres konteks saat sudah terlalu besar, langsung dari chat
-- **Keamanan** — whitelist user ID yang ketat; tidak ada orang lain yang dapat mengakses bot Anda, bahkan jika mereka menemukannya
-- **Lokalisasi** — antarmuka Bahasa Inggris, Rusia, dan Indonesia (`BOT_LOCALE=en|ru|id`)
+Fungsi inti sudah stabil dan aktif digunakan.
+
+- [x] Kontrol server OpenCode (`/status`, `/opencode_start`, `/opencode_stop`)
+- [x] Manajemen proyek/sesi dari Telegram
+- [x] Eksekusi prompt berbasis SSE event stream
+- [x] Penanganan pertanyaan + permission interaktif (tombol dan jawaban teks)
+- [x] Pinned live status (proyek, model, konteks, file berubah)
+- [x] Kontrol model/agent/variant
+- [x] Upload file dari Telegram sebagai konteks prompt
+- [x] Lokalisasi (`en`, `ru`, `id`) + ganti bahasa runtime (`/language`)
+
+Daftar improvement berikutnya ada di `PRODUCT.id.md`.
+
+## Fitur Utama
+
+- Prompt jarak jauh: pesan teks biasa langsung jadi prompt coding
+- Kontinuitas sesi: lanjutkan sesi lama atau buat sesi baru
+- Alat proyek: list proyek, buka direktori custom, list file, tree view
+- Interaksi inline: jawab pertanyaan OpenCode dan permission request di chat
+- Observability operasional: log, health check, pinned status update
+- Default aman: otorisasi single-user dan API lokal
 
 ## Prasyarat
 
-- **Node.js 20+** — [unduh](https://nodejs.org)
-- **OpenCode** — instal dari [opencode.ai](https://opencode.ai) atau [GitHub](https://github.com/sst/opencode)
-- **Bot Telegram** — Anda akan membuatnya saat setup (butuh 1 menit)
+- Node.js `>=20`
+- OpenCode CLI terpasang dan berjalan (`opencode --version`)
+- Token bot Telegram dari [@BotFather](https://t.me/BotFather)
+- Telegram numeric user ID Anda dari [@userinfobot](https://t.me/userinfobot)
 
-## Mulai Cepat
+## Quick Start
 
-### 1. Buat Bot Telegram
+### 1) Buat Bot Telegram
 
-1. Buka [@BotFather](https://t.me/BotFather) di Telegram dan kirim `/newbot`
-2. Ikuti petunjuk untuk memilih nama dan username
-3. Salin **token bot** yang Anda terima (misal `123456:ABC-DEF1234...`)
+1. Buka [@BotFather](https://t.me/BotFather)
+2. Jalankan `/newbot`
+3. Simpan token bot
 
-Anda juga membutuhkan **Telegram User ID** — kirim pesan apa pun ke [@userinfobot](https://t.me/userinfobot) dan ia akan membalas dengan ID numerik Anda.
+### 2) Jalankan OpenCode Server
 
-### 2. Mulai Server OpenCode
-
-Di direktori proyek Anda, mulai server OpenCode:
+Di workspace proyek Anda:
 
 ```bash
 opencode serve
 ```
 
-> Bot terhubung ke OpenCode API di `http://localhost:4096` secara default.
+URL API default yang dipakai bot: `http://localhost:4096`
 
-### 3. Instal & Jalankan
-
-Cara tercepat — jalankan langsung dengan `npx`:
+### 3) Jalankan Bot Ini (dari repository ini)
 
 ```bash
-npx @grinev/opencode-telegram-bot
+npm install
+npm run dev
 ```
 
-Pada peluncuran pertama, wizard interaktif akan memandu Anda melalui konfigurasi — akan meminta token bot, user ID, dan URL OpenCode API. Setelah itu, Anda siap. Buka bot di Telegram dan mulai kirim tugas.
+Pada run pertama, wizard setup akan meminta token, allowed user ID, dan URL API.
 
-#### Alternatif: Instalasi Global
+Alternatif instal global dari source lokal:
 
 ```bash
-npm install -g @grinev/opencode-telegram-bot
+npm install -g .
 opencode-telegram start
 ```
 
-Untuk mengkonfigurasi ulang kapan saja:
+Jika fork ini nanti dipublikasikan ke npm, gunakan nama package `@tamaproject360/opencode-telegram-bot`.
+
+Jalankan ulang setup kapan saja:
 
 ```bash
 opencode-telegram config
 ```
 
-## Platform yang Didukung
-
-| Platform | Status                                                                                                                                            |
-| -------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
-| macOS    | Didukung penuh                                                                                                                                    |
-| Windows  | Didukung penuh                                                                                                                                    |
-| Linux    | Eksperimental — seharusnya berfungsi, tetapi belum diuji secara menyeluruh. Anda mungkin perlu langkah tambahan seperti memberikan izin eksekusi. |
-
 ## Perintah Bot
 
-| Perintah          | Deskripsi                                               |
-| ----------------- | ------------------------------------------------------- |
-| `/status`         | Kesehatan server, proyek saat ini, info sesi, dan model |
-| `/new`            | Buat sesi baru                                          |
-| `/stop`           | Hentikan tugas saat ini                                 |
-| `/sessions`       | Jelajahi dan beralih antara sesi terbaru                |
-| `/projects`       | Beralih antara proyek OpenCode                          |
-| `/model`          | Pilih model dari favorit Anda                           |
-| `/agent`          | Ganti mode agen (Plan / Build)                          |
-| `/rename`         | Ubah nama sesi saat ini                                 |
-| `/opencode_start` | Mulai server OpenCode dari jarak jauh                   |
-| `/opencode_stop`  | Hentikan server OpenCode dari jarak jauh                |
-| `/help`           | Tampilkan perintah yang tersedia                        |
+| Perintah             | Deskripsi                                                                      |
+| -------------------- | ------------------------------------------------------------------------------ |
+| `/status`            | Menampilkan health server, proyek, sesi, model, dan detail runtime             |
+| `/new`               | Membuat sesi baru                                                              |
+| `/stop`              | Menghentikan task yang sedang berjalan                                         |
+| `/sessions`          | Menampilkan dan pindah sesi                                                    |
+| `/projects`          | Menampilkan dan pindah proyek                                                  |
+| `/newproject <path>` | Membuka direktori sebagai proyek OpenCode aktif                                |
+| `/ls [path]`         | Menampilkan daftar file di proyek aktif (disarankan path relatif)              |
+| `/tree [path]`       | Menampilkan struktur direktori (depth terbatas)                                |
+| `/model`             | Memilih model dari favorites                                                   |
+| `/agent`             | Memilih mode kerja/agent (umumnya Plan/Build, tergantung konfigurasi OpenCode) |
+| `/language`          | Mengganti bahasa UI bot (`en` / `ru` / `id`)                                   |
+| `/rename`            | Mengubah nama sesi aktif                                                       |
+| `/opencode_start`    | Menjalankan server OpenCode lokal                                              |
+| `/opencode_stop`     | Menghentikan server OpenCode lokal                                             |
+| `/help`              | Menampilkan bantuan                                                            |
 
-Setiap pesan teks biasa dikirim sebagai prompt ke agen coding.
-
-> `/opencode_start` dan `/opencode_stop` dimaksudkan sebagai perintah darurat — misalnya, jika Anda perlu memulai ulang server yang macet saat jauh dari komputer. Dalam penggunaan normal, mulai `opencode serve` sendiri sebelum menjalankan bot.
+Semua teks non-command diproses sebagai prompt.
 
 ## Konfigurasi
 
-### Variabel Lingkungan
+### Variabel Environment
 
-Saat diinstal via npm, wizard konfigurasi menangani pengaturan awal. File `.env` disimpan di direktori data aplikasi platform Anda:
+| Variabel                   | Deskripsi                                          | Wajib | Default                 |
+| -------------------------- | -------------------------------------------------- | :---: | ----------------------- |
+| `TELEGRAM_BOT_TOKEN`       | Token bot Telegram                                 |  Ya   | -                       |
+| `TELEGRAM_ALLOWED_USER_ID` | User ID Telegram yang diizinkan                    |  Ya   | -                       |
+| `TELEGRAM_PROXY_URL`       | Proxy Telegram API (`socks5://` atau `http(s)://`) | Tidak | -                       |
+| `OPENCODE_API_URL`         | Base URL OpenCode API                              | Tidak | `http://localhost:4096` |
+| `OPENCODE_SERVER_USERNAME` | Username auth OpenCode                             | Tidak | `opencode`              |
+| `OPENCODE_SERVER_PASSWORD` | Password auth OpenCode                             | Tidak | kosong                  |
+| `OPENCODE_MODEL_PROVIDER`  | Provider default                                   |  Ya   | -                       |
+| `OPENCODE_MODEL_ID`        | ID model default                                   |  Ya   | -                       |
+| `BOT_LOCALE`               | Locale awal (`en`, `ru`, `id`)                     | Tidak | `en`                    |
+| `SESSIONS_LIST_LIMIT`      | Jumlah maksimum sesi di `/sessions`                | Tidak | `10`                    |
+| `CODE_FILE_MAX_SIZE_KB`    | Batas ukuran file ke Telegram                      | Tidak | `100`                   |
+| `SHOW_THINKING`            | Tampilkan indikator "thinking" di chat             | Tidak | `true`                  |
+| `SHOW_TOOL_EVENTS`         | Tampilkan notifikasi tool call                     | Tidak | `true`                  |
+| `LOG_LEVEL`                | `debug`, `info`, `warn`, `error`                   | Tidak | `info`                  |
 
-- **macOS:** `~/Library/Application Support/opencode-telegram-bot/.env`
-- **Windows:** `%APPDATA%\opencode-telegram-bot\.env`
-- **Linux:** `~/.config/opencode-telegram-bot/.env`
+### Lokasi File Konfigurasi
 
-| Variabel                   | Deskripsi                                           | Wajib | Default                 |
-| -------------------------- | --------------------------------------------------- | :---: | ----------------------- |
-| `TELEGRAM_BOT_TOKEN`       | Token bot dari @BotFather                           |  Ya   | —                       |
-| `TELEGRAM_ALLOWED_USER_ID` | User ID Telegram numerik Anda                       |  Ya   | —                       |
-| `TELEGRAM_PROXY_URL`       | URL Proxy untuk Telegram API (SOCKS5/HTTP)          | Tidak | —                       |
-| `OPENCODE_API_URL`         | URL server OpenCode                                 | Tidak | `http://localhost:4096` |
-| `OPENCODE_SERVER_USERNAME` | Username autentikasi server                         | Tidak | `opencode`              |
-| `OPENCODE_SERVER_PASSWORD` | Password autentikasi server                         | Tidak | —                       |
-| `OPENCODE_MODEL_PROVIDER`  | Provider model default                              |  Ya   | `opencode`              |
-| `OPENCODE_MODEL_ID`        | ID model default                                    |  Ya   | `big-pickle`            |
-| `BOT_LOCALE`               | Bahasa antarmuka bot (`en`, `ru`, atau `id`)        | Tidak | `en`                    |
-| `SESSIONS_LIST_LIMIT`      | Maks sesi yang ditampilkan di `/sessions`           | Tidak | `10`                    |
-| `CODE_FILE_MAX_SIZE_KB`    | Ukuran file maks (KB) untuk dikirim sebagai dokumen | Tidak | `100`                   |
-| `LOG_LEVEL`                | Level log (`debug`, `info`, `warn`, `error`)        | Tidak | `info`                  |
+Saat diinstal via npm, file runtime disimpan di app-data path sesuai platform.
 
-> **Jaga file `.env` Anda tetap privat.** File ini berisi token bot Anda. Jangan pernah commit ke version control.
+- macOS: `~/Library/Application Support/opencode-telegram-bot/`
+- Windows: `%APPDATA%\opencode-telegram-bot\`
+- Linux: `~/.config/opencode-telegram-bot/`
 
-### Konfigurasi Model
+File penting:
 
-Bot mengambil **model favorit** Anda dari OpenCode. Untuk menambahkan model ke favorit:
+- `.env`: secret dan konfigurasi runtime
+- `settings.json`: state persisten bot (proyek/sesi/model/agent/locale)
 
-1. Buka OpenCode TUI (`opencode`)
-2. Pergi ke pemilihan model
-3. Arahkan kursor ke model yang Anda inginkan dan tekan **Ctrl+F** untuk menambahkannya ke favorit
+## Mode Agent dan Best Practice
 
-Favorit ini akan muncul di menu perintah `/model` di Telegram.
-
-Model gratis (`opencode/big-pickle`) dikonfigurasi sebagai fallback default — jika Anda belum menyiapkan favorit apapun, bot akan menggunakannya secara otomatis.
-
-## Keamanan
-
-Bot menerapkan **whitelist user ID** yang ketat. Hanya pengguna Telegram yang ID numeriknya sesuai dengan `TELEGRAM_ALLOWED_USER_ID` yang dapat berinteraksi dengan bot. Pesan dari pengguna lain diabaikan secara diam-diam dan dicatat sebagai percobaan akses tidak sah.
-
-Karena bot berjalan secara lokal di mesin Anda dan terhubung ke server OpenCode lokal Anda, tidak ada permukaan serangan eksternal di luar Telegram Bot API itu sendiri.
+- Pakai mode `Plan` untuk analisis/diskusi/non-edit workflow.
+- Pakai mode `Build` saat ingin bot melakukan perubahan kode.
+- Daftar agent mengikuti konfigurasi server OpenCode Anda; jika custom agent belum muncul, definisikan dulu di sisi OpenCode.
+- Jaga versi OpenCode server dan bot ini tetap terbaru agar tidak terjadi mismatch API/agent.
 
 ## Pengembangan
 
-### Menjalankan dari Sumber
+### Menjalankan dari Source
 
 ```bash
-git clone https://github.com/grinev/opencode-telegram-bot.git
+git clone https://github.com/tamaproject360/opencode-telegram-bot.git
 cd opencode-telegram-bot
 npm install
 cp .env.example .env
-# Edit .env dengan token bot, user ID, dan pengaturan model Anda
 ```
 
-Build dan jalankan:
+Lalu build dan jalankan:
 
 ```bash
 npm run dev
 ```
 
-### Script yang Tersedia
+### Scripts
 
-| Script                          | Deskripsi                                     |
-| ------------------------------- | --------------------------------------------- |
-| `npm run dev`                   | Build dan mulai (pengembangan)                |
-| `npm run build`                 | Kompilasi TypeScript                          |
-| `npm start`                     | Jalankan kode yang sudah dikompilasi          |
-| `npm run release:notes:preview` | Pratinjau catatan rilis yang dibuat otomatis  |
-| `npm run lint`                  | Pemeriksaan ESLint (kebijakan nol peringatan) |
-| `npm run format`                | Format kode dengan Prettier                   |
-| `npm test`                      | Jalankan tes (Vitest)                         |
-| `npm run test:coverage`         | Tes dengan laporan cakupan                    |
+| Script                          | Fungsi                        |
+| ------------------------------- | ----------------------------- |
+| `npm run dev`                   | Build + start                 |
+| `npm run build`                 | Kompilasi TypeScript          |
+| `npm start`                     | Menjalankan app hasil compile |
+| `npm run lint`                  | ESLint (tanpa warning)        |
+| `npm run format`                | Format kode via Prettier      |
+| `npm test`                      | Menjalankan Vitest            |
+| `npm run test:coverage`         | Test + coverage               |
+| `npm run release:notes:preview` | Preview release notes         |
 
-> **Catatan:** Tidak ada file watcher atau auto-restart yang digunakan. Bot mempertahankan koneksi SSE dan long-polling yang persisten — restart otomatis akan memutusnya di tengah tugas. Setelah membuat perubahan, restart secara manual dengan `npm run dev`.
+Quality gate yang disarankan sebelum rilis:
 
-## Pemecahan Masalah
+```bash
+npm run build && npm run lint && npm test
+```
 
-**Bot tidak merespons pesan**
+## Operasional dan Keamanan
 
-- Pastikan `TELEGRAM_ALLOWED_USER_ID` sesuai dengan Telegram user ID Anda yang sebenarnya (periksa dengan [@userinfobot](https://t.me/userinfobot))
-- Verifikasi token bot sudah benar
+- Jangan commit `.env` atau file berisi kredensial.
+- Rotasi token Telegram jika dicurigai bocor.
+- Batasi `TELEGRAM_ALLOWED_USER_ID` ke satu akun owner.
+- Jalankan server OpenCode di localhost kecuali memang butuh akses remote.
+- Gunakan `LOG_LEVEL=debug` saat investigasi issue callback/SSE.
 
-**"Server OpenCode tidak tersedia"**
+## Troubleshooting
 
-- Pastikan `opencode serve` berjalan di direktori proyek Anda
-- Periksa bahwa `OPENCODE_API_URL` mengarah ke alamat yang benar (default: `http://localhost:4096`)
+### Bot tidak merespons
 
-**Tidak ada model di menu `/model`**
+- Pastikan `TELEGRAM_ALLOWED_USER_ID` sesuai akun Telegram Anda
+- Pastikan token bot valid
+- Cek log proses bot untuk auth rejection
 
-- Tambahkan model ke favorit OpenCode Anda: buka OpenCode TUI, pergi ke pemilihan model, tekan **Ctrl+F** pada model yang diinginkan
+### `fetch failed` / server unavailable
 
-**Linux: kesalahan izin ditolak**
+- Pastikan `opencode serve` berjalan
+- Verifikasi `OPENCODE_API_URL`
+- Jika OpenCode pakai auth, cek username/password env
 
-- Pastikan binary CLI memiliki izin eksekusi: `chmod +x $(which opencode-telegram)`
-- Periksa bahwa direktori konfigurasi dapat ditulis: `~/.config/opencode-telegram-bot/`
+### `/ls` atau `/tree` kosong
+
+- Cek proyek aktif lewat `/status` dan `/projects`
+- Gunakan path relatif (contoh `/ls src`, `/tree src`)
+- Pastikan proyek aktif sama dengan workspace tempat OpenCode server berjalan
+
+### Daftar `/agent` tidak lengkap
+
+- Daftar agent dikontrol dari konfigurasi OpenCode server
+- Jika butuh custom agent, tambahkan dulu di sisi OpenCode
+
+### `/model` tidak menampilkan model
+
+- Tambahkan model ke favorites di OpenCode TUI
+- Buka ulang menu `/model` setelah update favorites
 
 ## Kontribusi
 
-Ikuti konvensi commit dan catatan rilis di [CONTRIBUTING.md](CONTRIBUTING.md).
+Ikuti konvensi di `CONTRIBUTING.md` dan `AGENTS.md`.
 
 ## Lisensi
 

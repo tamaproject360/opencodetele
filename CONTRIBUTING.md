@@ -14,7 +14,7 @@ Thanks for contributing to OpenCode Telegram Bot.
 
 ```bash
 # 1. Clone the repository
-git clone https://github.com/grinev/opencode-telegram-bot.git
+git clone https://github.com/tamaproject360/opencode-telegram-bot.git
 cd opencode-telegram-bot
 
 # 2. Install dependencies

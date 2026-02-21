@@ -13,6 +13,19 @@ Aplikasi bekerja sebagai jembatan antara Telegram dan server OpenCode yang berja
 
 Tidak diperlukan port inbound publik untuk penggunaan normal.
 
+## Ringkasan Arsitektur
+
+Produk disusun dalam layer dan manager yang jelas:
+
+- **Bot Layer** (`src/bot/*`): command grammY, callback handler, interaksi keyboard
+- **OpenCode Client Layer** (`src/opencode/*`): wrapper SDK + subscription SSE event
+- **State Managers** (`src/*/manager.ts`): session/project/model/agent/variant/permission/question/pinned/keyboard/process/settings
+- **Summary Pipeline** (`src/summary/*`): agregasi event dan formatting yang aman untuk Telegram
+- **Health Monitor** (`src/health/monitor.ts`): pengecekan server berkala dan notifikasi down/recovered
+- **I18n Layer** (`src/i18n/*`): kamus EN/RU/ID dengan pergantian bahasa saat runtime
+
+Dokumen arsitektur detail tersedia di `docs/ARCHITECTURE.md`.
+
 ## Skenario Penggunaan Target
 
 1. Pengguna mengerjakan proyek secara lokal dengan OpenCode (Desktop/TUI).
@@ -91,8 +104,12 @@ Set perintah saat ini:
 - [x] `/stop` - hentikan tugas saat ini
 - [x] `/sessions` - tampilkan dan ganti sesi terbaru
 - [x] `/projects` - tampilkan dan ganti proyek
+- [x] `/newproject` - buka direktori kustom sebagai proyek saat ini
+- [x] `/ls` - tampilkan daftar file di proyek saat ini
+- [x] `/tree` - tampilkan struktur direktori proyek
 - [x] `/model` - pilih model
 - [x] `/agent` - pilih mode agen
+- [x] `/language` - ganti bahasa bot saat runtime
 - [x] `/rename` - ubah nama sesi saat ini
 - [x] `/opencode_start` - mulai server OpenCode lokal
 - [x] `/opencode_stop` - hentikan server OpenCode lokal
@@ -111,20 +128,20 @@ Pesan teks (bukan perintah) diperlakukan sebagai prompt untuk OpenCode, kecuali 
 - [x] Pemilihan model dan agen dari Telegram
 - [x] Kontrol konteks/varian dari keyboard Telegram
 - [x] Mengirim blok kode sebagai file saat diperlukan
+- [x] Menerima file/foto dari Telegram dan melampirkannya ke prompt berikutnya
 - [x] Model keamanan pengguna tunggal (Telegram user ID yang diizinkan)
 - [x] Pengaturan bot persisten (`settings.json`) antar restart
-- [x] Struktur lokalisasi EN/RU/ID via file i18n khusus
+- [x] Lokalisasi EN/RU/ID dengan penggantian bahasa saat runtime
+- [x] Health monitor dengan notifikasi gangguan dan pemulihan server di Telegram
 
 ## Daftar Tugas Saat Ini
 
 Tugas terbuka untuk iterasi mendatang:
 
-- [ ] Tampilkan server MCP, formatter, dan plugin di status/detail bot
+- [ ] Tampilkan plugin di status/detail bot
 - [ ] Konfigurasi tingkat visibilitas untuk thinking dan langkah perantara
-- [ ] Tambahkan notifikasi crash server di Telegram
-- [ ] Tambahkan pemeriksaan kesehatan berkala dan auto-restart opsional untuk server OpenCode
+- [ ] Tambahkan kebijakan auto-restart opsional untuk server OpenCode setelah kegagalan health-check berulang
 - [ ] Perbaiki format pesan yang kompatibel dengan Telegram untuk output yang lebih kaya
-- [ ] Dukung pengiriman file dari Telegram ke OpenCode (screenshot, dokumen)
 - [ ] Sediakan image Docker dan panduan deployment container dasar
 
 ## Kemungkinan Peningkatan
@@ -132,5 +149,5 @@ Tugas terbuka untuk iterasi mendatang:
 Peningkatan opsional atau jangka panjang:
 
 - [ ] Buat proyek OpenCode baru langsung dari Telegram
-- [ ] Tambahkan helper penjelajahan file proyek (misalnya, alur `ls` dan `open`)
+- [ ] Tambahkan helper penjelajahan file proyek yang lebih kaya (misalnya, alur `open` atau preview)
 - [ ] Tingkatkan dukungan untuk alur kerja berbasis git worktree

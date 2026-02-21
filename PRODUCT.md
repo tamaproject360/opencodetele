@@ -13,6 +13,19 @@ The app works as a bridge between Telegram and a locally running OpenCode server
 
 No public inbound ports are required for normal usage.
 
+## Architecture Snapshot
+
+The product is organized into clear layers and managers:
+
+- **Bot Layer** (`src/bot/*`): grammY commands, callback handlers, keyboard interactions
+- **OpenCode Client Layer** (`src/opencode/*`): SDK wrapper + SSE event subscription
+- **State Managers** (`src/*/manager.ts`): session/project/model/agent/variant/permission/question/pinned/keyboard/process/settings
+- **Summary Pipeline** (`src/summary/*`): event aggregation and Telegram-safe formatting
+- **Health Monitor** (`src/health/monitor.ts`): periodic server checks and outage/recovery alerts
+- **I18n Layer** (`src/i18n/*`): EN/RU/ID dictionaries with runtime language selection
+
+Detailed architecture is documented in `docs/ARCHITECTURE.md`.
+
 ## Target Usage Scenario
 
 1. The user works on a project locally with OpenCode (Desktop/TUI).
@@ -91,8 +104,12 @@ Current command set:
 - [x] `/stop` - stop the current task
 - [x] `/sessions` - show and switch recent sessions
 - [x] `/projects` - show and switch projects
+- [x] `/newproject` - open a custom directory as current project
+- [x] `/ls` - list files in the current project
+- [x] `/tree` - show project directory tree
 - [x] `/model` - select model
 - [x] `/agent` - select agent mode
+- [x] `/language` - switch bot language at runtime
 - [x] `/rename` - rename current session
 - [x] `/opencode_start` - start local OpenCode server
 - [x] `/opencode_stop` - stop local OpenCode server
@@ -111,20 +128,20 @@ Text messages (non-commands) are treated as prompts for OpenCode, except when an
 - [x] Model and agent selection from Telegram
 - [x] Context/variant controls from Telegram keyboard
 - [x] Sending code blocks as files when needed
+- [x] Receiving files/photos from Telegram and attaching them to next prompt
 - [x] Single-user security model (allowed Telegram user ID)
 - [x] Persistent bot settings (`settings.json`) between restarts
-- [x] EN/RU localization structure via dedicated i18n files
+- [x] EN/RU/ID localization with runtime language switching
+- [x] Health monitor with outage and recovery alerts in Telegram
 
 ## Current Task List
 
 Open tasks for upcoming iterations:
 
-- [ ] Display MCP servers, formatters, and plugins in bot status/details
+- [ ] Display plugins in bot status/details
 - [ ] Configure visibility level for thinking and intermediate steps
-- [ ] Add server crash notifications in Telegram
-- [ ] Add periodic health checks and optional auto-restart for OpenCode server
+- [ ] Add optional auto-restart policy for OpenCode server after repeated health-check failures
 - [ ] Improve Telegram-compatible message formatting for richer outputs
-- [ ] Support sending files from Telegram to OpenCode (screenshots, documents)
 - [ ] Provide a Docker image and basic container deployment guide
 
 ## Possible Improvements
@@ -132,5 +149,5 @@ Open tasks for upcoming iterations:
 Optional or longer-term enhancements:
 
 - [ ] Create new OpenCode projects directly from Telegram
-- [ ] Add project file browsing helpers (for example, `ls` and `open` flows)
+- [ ] Add richer project file browsing helpers (for example, `open` or preview flows)
 - [ ] Improve support for git worktree-based workflows

@@ -10,9 +10,9 @@ Panduan ini menjelaskan cara menjalankan bot dari source code (mode development)
 
 Digunakan saat Anda sedang mengembangkan atau menguji perubahan kode secara langsung. **Tidak perlu publish ke npm.**
 
-### Cara B — Dari npm (untuk penggunaan sehari-hari / production)
+### Cara B — Install global dari source lokal (untuk penggunaan sehari-hari)
 
-Digunakan jika hanya ingin memakai bot tanpa mengedit kode. Package sudah tersedia di npm registry.
+Digunakan jika Anda ingin memakai perintah CLI secara global tanpa publish ke npm registry.
 
 ---
 
@@ -56,7 +56,7 @@ Server akan berjalan di `http://localhost:4096` secara default. Biarkan terminal
 ### A1. Clone dan install dependensi
 
 ```bash
-git clone https://github.com/grinev/opencode-telegram-bot.git
+git clone https://github.com/tamaproject360/opencode-telegram-bot.git
 cd opencode-telegram-bot
 npm install
 ```
@@ -101,12 +101,13 @@ Perintah ini akan compile TypeScript lalu menjalankan bot. Jika berhasil, Anda a
 
 ---
 
-## Cara B — Menjalankan dari npm (tanpa clone repo)
+## Cara B — Menjalankan secara global dari source lokal
 
-### B1. Jalankan langsung dengan npx (paling cepat)
+### B1. Install global dari folder project
 
 ```bash
-npx @grinev/opencode-telegram-bot
+npm install -g .
+opencode-telegram start
 ```
 
 Saat pertama kali, wizard konfigurasi interaktif akan muncul dan menanyakan:
@@ -121,12 +122,7 @@ Konfigurasi disimpan secara otomatis di:
 - **macOS:** `~/Library/Application Support/opencode-telegram-bot/.env`
 - **Linux:** `~/.config/opencode-telegram-bot/.env`
 
-### B2. Atau install secara global
-
-```bash
-npm install -g @grinev/opencode-telegram-bot
-opencode-telegram start
-```
+### B2. Ubah konfigurasi di kemudian hari
 
 Untuk mengubah konfigurasi di kemudian hari:
 
@@ -134,7 +130,7 @@ Untuk mengubah konfigurasi di kemudian hari:
 opencode-telegram config
 ```
 
-> **Catatan penting:** Cara B menggunakan versi yang sudah dipublish ke npm. Perubahan kode lokal (seperti perbaikan model selection) **tidak akan aktif** sampai versi baru dipublish. Gunakan Cara A untuk menguji perubahan kode.
+> **Catatan penting:** Jika Anda publish package ini nanti, gunakan nama `@tamaproject360/opencode-telegram-bot`.
 
 ---
 

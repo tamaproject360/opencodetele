@@ -1,5 +1,5 @@
 {
-  "name": "@grinev/opencode-telegram-bot",
+  "name": "@tamaproject360/opencode-telegram-bot",
   "version": "0.4.0",
   "description": "Telegram bot client for OpenCode to run and monitor coding tasks from chat.",
   "type": "module",
@@ -36,7 +36,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/grinev/opencode-telegram-bot.git"
+    "url": "git+https://github.com/tamaproject360/opencode-telegram-bot.git"
   },
   "keywords": [
     "opencode",
@@ -46,12 +46,12 @@
     "developer-tools",
     "cli"
   ],
-  "author": "grinev",
+  "author": "tamaproject360",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/grinev/opencode-telegram-bot/issues"
+    "url": "https://github.com/tamaproject360/opencode-telegram-bot/issues"
   },
-  "homepage": "https://github.com/grinev/opencode-telegram-bot#readme",
+  "homepage": "https://github.com/tamaproject360/opencode-telegram-bot#readme",
   "dependencies": {
     "@opencode-ai/sdk": "^1.1.21",
     "better-sqlite3": "^12.6.2",
