@@ -3,7 +3,6 @@ import { opencodeClient } from "../../opencode/client.js";
 import { getCurrentProject } from "../../settings/manager.js";
 import { logger } from "../../utils/logger.js";
 import { t } from "../../i18n/index.js";
-import path from "node:path";
 
 const MAX_LS_ITEMS = 50;
 const MAX_MESSAGE_LENGTH = 4000;
@@ -16,8 +15,7 @@ export async function lsCommand(ctx: CommandContext<Context>): Promise<void> {
   }
 
   const directory = currentProject.worktree;
-  const inputPath = ctx.match?.trim() || ".";
-  const subPath = path.isAbsolute(inputPath) ? inputPath : path.resolve(directory, inputPath);
+  const subPath = ctx.match?.trim() || ".";
 
   try {
     const { data: files, error } = await opencodeClient.file.list({
@@ -86,8 +84,7 @@ export async function treeCommand(ctx: CommandContext<Context>): Promise<void> {
   }
 
   const directory = currentProject.worktree;
-  const inputPath = ctx.match?.trim() || ".";
-  const subPath = path.isAbsolute(inputPath) ? inputPath : path.resolve(directory, inputPath);
+  const subPath = ctx.match?.trim() || ".";
 
   try {
     const lines: string[] = [];
