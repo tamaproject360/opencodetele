@@ -8,6 +8,7 @@ export const id: I18nDictionary = {
   "cmd.description.projects": "Daftar proyek",
   "cmd.description.model": "Pilih model",
   "cmd.description.agent": "Pilih mode kerja",
+  "cmd.description.language": "Ganti bahasa",
   "cmd.description.opencode_start": "Mulai server OpenCode",
   "cmd.description.opencode_stop": "Hentikan server OpenCode",
   "cmd.description.help": "Bantuan",
@@ -152,6 +153,11 @@ export const id: I18nDictionary = {
   "agent.change_error_callback": "Gagal mengubah mode",
   "agent.menu.current": "Mode saat ini: {name}\n\nPilih mode:",
   "agent.menu.select": "Pilih mode kerja:",
+
+  "language.menu.current": "Bahasa saat ini: {name}\n\nPilih bahasa:",
+  "language.menu.error": "🔴 Gagal memuat menu bahasa",
+  "language.changed_callback": "Bahasa diubah: {name}",
+  "language.changed_message": "✅ Bahasa diubah menjadi: {name}",
 
   "model.changed_callback": "Model diubah: {name}",
   "model.changed_message": "✅ Model diubah menjadi: {name}",

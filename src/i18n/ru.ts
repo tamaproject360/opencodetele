@@ -8,6 +8,7 @@ export const ru: I18nDictionary = {
   "cmd.description.projects": "Список проектов",
   "cmd.description.model": "Выбрать модель",
   "cmd.description.agent": "Выбрать режим работы",
+  "cmd.description.language": "Изменить язык",
   "cmd.description.opencode_start": "Запустить OpenCode сервер",
   "cmd.description.opencode_stop": "Остановить OpenCode сервер",
   "cmd.description.help": "Справка",
@@ -153,6 +154,11 @@ export const ru: I18nDictionary = {
   "agent.change_error_callback": "Ошибка при смене режима",
   "agent.menu.current": "Текущий режим: {name}\n\nВыберите режим:",
   "agent.menu.select": "Выберите режим работы:",
+
+  "language.menu.current": "Текущий язык: {name}\n\nВыберите язык:",
+  "language.menu.error": "🔴 Ошибка при загрузке меню языков",
+  "language.changed_callback": "Язык изменен: {name}",
+  "language.changed_message": "✅ Язык изменен на: {name}",
 
   "model.changed_callback": "Модель изменена: {name}",
   "model.changed_message": "✅ Модель изменена на: {name}",

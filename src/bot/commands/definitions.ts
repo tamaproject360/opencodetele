@@ -20,7 +20,7 @@ interface BotCommandI18nDefinition {
  * List of all bot commands
  * Update this array when adding new commands
  */
-const COMMAND_DEFINITIONS: BotCommandI18nDefinition[] = [
+export const COMMAND_DEFINITIONS: BotCommandI18nDefinition[] = [
   { command: "status", descriptionKey: "cmd.description.status" },
   { command: "new", descriptionKey: "cmd.description.new" },
   { command: "stop", descriptionKey: "cmd.description.stop" },
@@ -31,6 +31,7 @@ const COMMAND_DEFINITIONS: BotCommandI18nDefinition[] = [
   { command: "tree", descriptionKey: "cmd.description.tree" },
   { command: "model", descriptionKey: "cmd.description.model" },
   { command: "agent", descriptionKey: "cmd.description.agent" },
+  { command: "language", descriptionKey: "cmd.description.language" },
   { command: "rename", descriptionKey: "cmd.description.rename" },
   { command: "opencode_start", descriptionKey: "cmd.description.opencode_start" },
   { command: "opencode_stop", descriptionKey: "cmd.description.opencode_stop" },

@@ -30,9 +30,10 @@ export async function getAvailableAgents(): Promise<AgentInfo[]> {
       return [];
     }
 
-    // Filter out hidden agents and subagents (only show primary and all)
+    // Filter out hidden agents and subagents (only show primary, all, and ask)
     const filtered = agents.filter(
-      (agent) => !agent.hidden && (agent.mode === "primary" || agent.mode === "all"),
+      (agent) =>
+        !agent.hidden && (agent.mode === "primary" || agent.mode === "all" || agent.name === "ask"),
     );
 
     logger.debug(`[AgentManager] Fetched ${filtered.length} available agents`);

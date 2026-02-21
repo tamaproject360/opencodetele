@@ -1,6 +1,7 @@
 import { en, type I18nKey } from "./en.js";
 import { id } from "./id.js";
 import { ru } from "./ru.js";
+import { getStoredLocale } from "../settings/manager.js";
 
 export const SUPPORTED_LOCALES = ["en", "ru", "id"] as const;
 
@@ -49,6 +50,11 @@ function interpolate(template: string, params?: TranslationParams): string {
 export function getLocale(): Locale {
   if (runtimeLocaleOverride) {
     return runtimeLocaleOverride;
+  }
+
+  const storedLocale = getStoredLocale();
+  if (storedLocale) {
+    return normalizeLocale(storedLocale);
   }
 
   const localeFromEnv = process.env.BOT_LOCALE;

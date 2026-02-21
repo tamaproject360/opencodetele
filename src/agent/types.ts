@@ -18,6 +18,7 @@ export const AGENT_EMOJI: Record<string, string> = {
   build: "🛠️",
   general: "💬",
   explore: "🔍",
+  ask: "🤔",
   title: "📝",
   summary: "📄",
   compaction: "📦",

@@ -19,6 +19,7 @@ import { handleModelCommand } from "./commands/model.js";
 import { renameCommand, handleRenameCancel, handleRenameTextAnswer } from "./commands/rename.js";
 import { newprojectCommand } from "./commands/newproject.js";
 import { lsCommand, treeCommand } from "./commands/ls.js";
+import { languageCommand, handleLanguageSelect } from "./commands/language.js";
 import { handleQuestionCallback, handleQuestionTextAnswer } from "./handlers/question.js";
 import { handlePermissionCallback } from "./handlers/permission.js";
 import { handleAgentSelect, showAgentSelectionMenu } from "./handlers/agent.js";
@@ -230,6 +231,7 @@ export function createBot(): Bot<Context> {
   bot.command("newproject", newprojectCommand);
   bot.command("ls", lsCommand);
   bot.command("tree", treeCommand);
+  bot.command("language", languageCommand);
 
   bot.on("callback_query:data", async (ctx) => {
     logger.debug(`[Bot] Received callback_query:data: ${ctx.callbackQuery?.data}`);
@@ -243,12 +245,13 @@ export function createBot(): Bot<Context> {
       const handledAgent = await handleAgentSelect(ctx);
       const handledModel = await handleModelSelect(ctx);
       const handledVariant = await handleVariantSelect(ctx);
+      const handledLanguage = await handleLanguageSelect(ctx);
       const handledCompactConfirm = await handleCompactConfirm(ctx);
       const handledCompactCancel = await handleCompactCancel(ctx);
       const handledRenameCancel = await handleRenameCancel(ctx);
 
       logger.debug(
-        `[Bot] Callback handled: session=${handledSession}, project=${handledProject}, question=${handledQuestion}, permission=${handledPermission}, agent=${handledAgent}, model=${handledModel}, variant=${handledVariant}, compact=${handledCompactConfirm || handledCompactCancel}, rename=${handledRenameCancel}`,
+        `[Bot] Callback handled: session=${handledSession}, project=${handledProject}, question=${handledQuestion}, permission=${handledPermission}, agent=${handledAgent}, model=${handledModel}, variant=${handledVariant}, language=${handledLanguage}, compact=${handledCompactConfirm || handledCompactCancel}, rename=${handledRenameCancel}`,
       );
 
       if (
@@ -259,6 +262,7 @@ export function createBot(): Bot<Context> {
         !handledAgent &&
         !handledModel &&
         !handledVariant &&
+        !handledLanguage &&
         !handledCompactConfirm &&
         !handledCompactCancel &&
         !handledRenameCancel

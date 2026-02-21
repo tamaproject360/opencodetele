@@ -37,6 +37,7 @@ export interface Settings {
   pinnedMessageId?: number;
   serverProcess?: ServerProcessInfo;
   sessionDirectoryCache?: SessionDirectoryCacheInfo;
+  locale?: string;
 }
 
 function getSettingsFilePath(): string {
@@ -174,6 +175,15 @@ export function setSessionDirectoryCache(cache: SessionDirectoryCacheInfo): Prom
 
 export function clearSessionDirectoryCache(): void {
   currentSettings.sessionDirectoryCache = undefined;
+  void writeSettingsFile(currentSettings);
+}
+
+export function getStoredLocale(): string | undefined {
+  return currentSettings.locale;
+}
+
+export function setStoredLocale(locale: string): void {
+  currentSettings.locale = locale;
   void writeSettingsFile(currentSettings);
 }
 

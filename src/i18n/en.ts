@@ -6,6 +6,7 @@ export const en = {
   "cmd.description.projects": "List projects",
   "cmd.description.model": "Select model",
   "cmd.description.agent": "Select mode",
+  "cmd.description.language": "Change language",
   "cmd.description.opencode_start": "Start OpenCode server",
   "cmd.description.opencode_stop": "Stop OpenCode server",
   "cmd.description.help": "Help",
@@ -151,6 +152,11 @@ export const en = {
   "agent.change_error_callback": "Failed to change mode",
   "agent.menu.current": "Current mode: {name}\n\nSelect mode:",
   "agent.menu.select": "Select work mode:",
+
+  "language.menu.current": "Current language: {name}\n\nSelect language:",
+  "language.menu.error": "🔴 Failed to load language menu",
+  "language.changed_callback": "Language changed: {name}",
+  "language.changed_message": "✅ Language changed to: {name}",
 
   "model.changed_callback": "Model changed: {name}",
   "model.changed_message": "✅ Model changed to: {name}",
